@@ -10,6 +10,7 @@ describe('lerAmbiente', () => {
     expect(a.ia.ollama).toEqual({
       url: 'http://localhost:11434',
       modelo: 'qwen3:8b',
+      contexto: 32768,
     });
     expect(a.ia.anthropic).toEqual({
       modelo: 'claude-opus-5-5',

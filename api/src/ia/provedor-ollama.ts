@@ -25,6 +25,7 @@ export class ProvedorOllama implements ProvedorIa {
   constructor(
     private readonly url: string,
     private readonly modelo: string,
+    private readonly contexto: number,
   ) {
     this.nome = `ollama (${modelo})`;
   }
@@ -47,6 +48,11 @@ export class ProvedorOllama implements ProvedorIa {
           // Modelos com "modo raciocínio" (qwen3...) respondem bem mais rápido sem ele,
           // e para atendimento de FAQ não faz falta.
           think: false,
+          // O padrão do Ollama é 4096 tokens: o que passar disso (base de conhecimento
+          // grande, conversa longa) é cortado sem aviso. Sobe para caber a base inteira.
+          options: { num_ctx: this.contexto },
+          // Mantém o modelo carregado na placa por 30 min: carregar leva ~1-2 min.
+          keep_alive: '30m',
           messages: [
             { role: 'system', content: sistema },
             ...mensagens.map((m) => ({

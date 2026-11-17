@@ -14,7 +14,11 @@ import { ProvedorSimulado } from './provedor-simulado.js';
         const { ia } = lerAmbiente();
         const provedor =
           ia.provedor === 'ollama'
-            ? new ProvedorOllama(ia.ollama.url, ia.ollama.modelo)
+            ? new ProvedorOllama(
+                ia.ollama.url,
+                ia.ollama.modelo,
+                ia.ollama.contexto,
+              )
             : ia.provedor === 'anthropic'
               ? new ProvedorAnthropic(ia.anthropic.modelo, ia.anthropic.esforco)
               : new ProvedorSimulado();

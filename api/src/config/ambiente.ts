@@ -14,7 +14,7 @@ export interface Ambiente {
   origensCors: string[];
   ia: {
     provedor: ProvedorIaNome;
-    ollama: { url: string; modelo: string };
+    ollama: { url: string; modelo: string; contexto: number };
     anthropic: { modelo: string; esforco: Esforco };
   };
 }
@@ -47,6 +47,11 @@ export function lerAmbiente(env: NodeJS.ProcessEnv = process.env): Ambiente {
           '',
         ),
         modelo: env.OLLAMA_MODELO?.trim() || 'qwen3:8b',
+        contexto: inteiroPositivo(
+          'OLLAMA_CONTEXTO',
+          env.OLLAMA_CONTEXTO,
+          32768,
+        ),
       },
       anthropic: {
         modelo: env.ANTHROPIC_MODELO?.trim() || 'claude-opus-5-5',
@@ -72,4 +77,17 @@ function umDe<T extends string>(
     throw new Error(`${nome} inválido: "${valor}". Use ${opcoes.join(' | ')}.`);
   }
   return v;
+}
+
+function inteiroPositivo(
+  nome: string,
+  valor: string | undefined,
+  padrao: number,
+): number {
+  if (!valor?.trim()) return padrao;
+  const n = Number(valor);
+  if (!Number.isInteger(n) || n <= 0) {
+    throw new Error(`${nome} inválido: "${valor}". Use um inteiro positivo.`);
+  }
+  return n;
 }
