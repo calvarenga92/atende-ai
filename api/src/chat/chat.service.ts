@@ -4,7 +4,12 @@ import { Repository } from 'typeorm';
 import { Conversa } from '../conversas/conversa.entity.js';
 import { Mensagem } from '../conversas/mensagem.entity.js';
 import { EmpresasService } from '../empresas/empresas.service.js';
-import { PROVEDOR_IA, type ProvedorIa } from '../ia/provedor-ia.js';
+import {
+  type MensagemIa,
+  PROVEDOR_IA,
+  type ProvedorIa,
+} from '../ia/provedor-ia.js';
+import { LeadsService } from '../leads/leads.service.js';
 import { montarPromptSistema } from './prompt-sistema.js';
 
 /** O que o chat manda para o navegador, em ordem. */
@@ -25,6 +30,7 @@ export class ChatService {
 
   constructor(
     private readonly empresas: EmpresasService,
+    private readonly leads: LeadsService,
     @Inject(PROVEDOR_IA) private readonly ia: ProvedorIa,
     @InjectRepository(Conversa)
     private readonly conversas: Repository<Conversa>,
@@ -77,21 +83,29 @@ export class ChatService {
           papel: m.papel,
           conteudo: m.conteudo,
         })),
+        ferramentas: [this.leads.ferramentaSalvar(empresa.id, conversa.id)],
         aoTexto: (pedaco) => emitir({ tipo: 'texto', texto: pedaco }),
         sinal,
       });
 
-      let conteudo = resposta.conteudo;
+      const novas: MensagemIa[] = [...resposta.mensagens];
       if (resposta.recusou) {
         emitir({ tipo: 'texto', texto: MSG_RECUSA });
-        conteudo = [{ type: 'text', text: MSG_RECUSA }];
-      }
-      await this.mensagens.save(
-        this.mensagens.create({
-          conversaId: conversa.id,
+        novas.push({
           papel: 'assistant',
-          conteudo,
-        }),
+          conteudo: [{ type: 'text', text: MSG_RECUSA }],
+        });
+      }
+      // Guarda tudo, inclusive pedido e resultado de ferramenta: a IA precisa
+      // disso no histórico para saber, nas próximas mensagens, o que já fez.
+      await this.mensagens.save(
+        novas.map((m) =>
+          this.mensagens.create({
+            conversaId: conversa.id,
+            papel: m.papel,
+            conteudo: m.conteudo,
+          }),
+        ),
       );
       if (resposta.consumo) {
         this.log.log(

@@ -1,13 +1,33 @@
+import { randomUUID } from 'node:crypto';
 import {
+  chamadasDosBlocos,
+  executarChamadas,
+  type FerramentaIa,
+  MAX_RODADAS_FERRAMENTA,
+  type MensagemIa,
   type PedidoIa,
   type ProvedorIa,
   type RespostaIa,
+  resultadosDosBlocos,
+  separadorDeRodadas,
   textoDosBlocos,
 } from './provedor-ia.js';
 
+interface ChamadaOllama {
+  id?: string;
+  function: { name: string; arguments: unknown };
+}
+
+interface MensagemOllama {
+  role: 'system' | 'user' | 'assistant' | 'tool';
+  content: string;
+  tool_calls?: ChamadaOllama[];
+  tool_name?: string;
+}
+
 /** Uma linha do stream NDJSON de POST /api/chat do Ollama. */
 interface LinhaOllama {
-  message?: { content?: string };
+  message?: { content?: string; tool_calls?: ChamadaOllama[] };
   done?: boolean;
   error?: string;
   prompt_eval_count?: number;
@@ -33,9 +53,68 @@ export class ProvedorOllama implements ProvedorIa {
   async responder({
     sistema,
     mensagens,
+    ferramentas = [],
     aoTexto,
     sinal,
   }: PedidoIa): Promise<RespostaIa> {
+    const historico: MensagemOllama[] = [
+      { role: 'system', content: sistema },
+      ...paraOllama(mensagens),
+    ];
+    const novas: MensagemIa[] = [];
+    const saida = separadorDeRodadas(aoTexto);
+    let entrada = 0;
+    let gerados = 0;
+    let duracao = 0;
+
+    for (let rodada = 1; ; rodada++) {
+      saida.novaRodada();
+      const r = await this.rodada(historico, ferramentas, saida.aoTexto, sinal);
+      entrada += r.final?.prompt_eval_count ?? 0;
+      gerados += r.final?.eval_count ?? 0;
+      duracao += r.final?.total_duration ?? 0;
+
+      const chamadas = r.chamadas.map((c) => ({
+        type: 'tool_use',
+        id: c.id ?? `ollama_${randomUUID()}`,
+        name: c.function.name,
+        input: c.function.arguments,
+      }));
+      const conteudo: unknown[] = [
+        ...(r.texto ? [{ type: 'text', text: r.texto }] : []),
+        ...chamadas,
+      ];
+      novas.push({ papel: 'assistant', conteudo });
+      historico.push({
+        role: 'assistant',
+        content: r.texto,
+        ...(r.chamadas.length ? { tool_calls: r.chamadas } : {}),
+      });
+
+      if (!chamadas.length) break;
+
+      // Todo pedido de ferramenta precisa de resultado no histórico, mesmo na última rodada.
+      const resultado = await executarChamadas(
+        chamadasDosBlocos(conteudo),
+        ferramentas,
+      );
+      novas.push(resultado);
+      historico.push(...paraOllama([resultado], conteudo));
+      if (rodada >= MAX_RODADAS_FERRAMENTA) break;
+    }
+
+    return {
+      mensagens: novas,
+      consumo: `entrada ${entrada}, saída ${gerados} tokens em ${(duracao / 1e9).toFixed(1)}s (local, sem custo)`,
+    };
+  }
+
+  private async rodada(
+    historico: MensagemOllama[],
+    ferramentas: FerramentaIa[],
+    aoTexto: (pedaco: string) => void,
+    sinal: AbortSignal,
+  ) {
     let resposta: Response;
     try {
       resposta = await fetch(`${this.url}/api/chat`, {
@@ -53,13 +132,15 @@ export class ProvedorOllama implements ProvedorIa {
           options: { num_ctx: this.contexto },
           // Mantém o modelo carregado na placa por 30 min: carregar leva ~1-2 min.
           keep_alive: '30m',
-          messages: [
-            { role: 'system', content: sistema },
-            ...mensagens.map((m) => ({
-              role: m.papel,
-              content: textoDosBlocos(m.conteudo),
-            })),
-          ],
+          tools: ferramentas.map((f) => ({
+            type: 'function',
+            function: {
+              name: f.nome,
+              description: f.descricao,
+              parameters: f.parametros,
+            },
+          })),
+          messages: historico,
         }),
       });
     } catch (erro) {
@@ -76,6 +157,7 @@ export class ProvedorOllama implements ProvedorIa {
     }
 
     let texto = '';
+    const chamadas: ChamadaOllama[] = [];
     let final: LinhaOllama | undefined;
     let buffer = '';
     const decodificador = new TextDecoder();
@@ -93,16 +175,55 @@ export class ProvedorOllama implements ProvedorIa {
           texto += pedaco;
           aoTexto(pedaco);
         }
+        chamadas.push(...(dado.message?.tool_calls ?? []));
         if (dado.done) final = dado;
       }
     }
-
-    const segundos = final?.total_duration
-      ? (final.total_duration / 1e9).toFixed(1)
-      : '?';
-    return {
-      conteudo: [{ type: 'text', text: texto }],
-      consumo: `entrada ${final?.prompt_eval_count ?? '?'}, saída ${final?.eval_count ?? '?'} tokens em ${segundos}s (local, sem custo)`,
-    };
+    return { texto, chamadas, final };
   }
+}
+
+/**
+ * Converte o histórico em blocos para o formato do Ollama.
+ * `anteriores` ajuda a achar o nome da ferramenta de cada resultado.
+ */
+export function paraOllama(
+  mensagens: MensagemIa[],
+  anteriores: unknown[] = [],
+): MensagemOllama[] {
+  const nomePorId = new Map(
+    chamadasDosBlocos(anteriores).map((c) => [c.id, c.nome]),
+  );
+  const saida: MensagemOllama[] = [];
+
+  for (const m of mensagens) {
+    const texto = textoDosBlocos(m.conteudo);
+    if (m.papel === 'assistant') {
+      const chamadas = chamadasDosBlocos(m.conteudo);
+      for (const c of chamadas) nomePorId.set(c.id, c.nome);
+      if (!texto && !chamadas.length) continue;
+      saida.push({
+        role: 'assistant',
+        content: texto,
+        ...(chamadas.length
+          ? {
+              tool_calls: chamadas.map((c) => ({
+                id: c.id,
+                function: { name: c.nome, arguments: c.entrada },
+              })),
+            }
+          : {}),
+      });
+    } else {
+      for (const r of resultadosDosBlocos(m.conteudo)) {
+        saida.push({
+          role: 'tool',
+          content: r.texto,
+          tool_name: nomePorId.get(r.idChamada) ?? '',
+        });
+      }
+      if (texto) saida.push({ role: 'user', content: texto });
+    }
+  }
+  return saida;
 }

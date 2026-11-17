@@ -28,6 +28,16 @@ export function montarPromptSistema(e: DadosPrompt): string {
     ].join('\n'),
   ];
 
+  partes.push(
+    [
+      'Contato de interessados (ferramenta salvar_lead):',
+      '- Quando a pessoa mostrar interesse em comprar, encomendar, pedir orçamento ou falar com a equipe, ofereça que a equipe entre em contato e peça, numa pergunta só, o nome e um telefone com DDD ou e-mail.',
+      '- Se ela só está tirando dúvida, não peça dados.',
+      '- Assim que tiver nome e contato informados pela própria pessoa, chame salvar_lead com um resumo do interesse. Nunca invente nem complete dados.',
+      '- Se salvar_lead apontar um problema, peça à pessoa só o dado que falta. Depois de salvar, não peça os dados de novo.',
+    ].join('\n'),
+  );
+
   if (e.instrucoes.trim()) {
     partes.push(`Orientações da empresa:\n${e.instrucoes.trim()}`);
   }

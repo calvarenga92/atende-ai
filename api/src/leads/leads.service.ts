@@ -1,0 +1,74 @@
+import { Injectable, Logger } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository } from 'typeorm';
+import type { FerramentaIa } from '../ia/provedor-ia.js';
+import { validarLead } from './dados-lead.js';
+import { Lead } from './lead.entity.js';
+
+@Injectable()
+export class LeadsService {
+  private readonly log = new Logger(LeadsService.name);
+
+  constructor(
+    @InjectRepository(Lead) private readonly repo: Repository<Lead>,
+  ) {}
+
+  listar(empresaId: string) {
+    return this.repo.find({
+      where: { empresaId },
+      order: { criadoEm: 'DESC' },
+    });
+  }
+
+  /**
+   * Ferramenta `salvar_lead` presa a uma conversa: a IA só informa os dados da pessoa,
+   * nunca para qual empresa ou conversa salvar (isso não pode vir do modelo).
+   */
+  ferramentaSalvar(empresaId: string, conversaId: string): FerramentaIa {
+    return {
+      nome: 'salvar_lead',
+      descricao:
+        'Salva o nome e o contato de um visitante interessado, para a equipe da empresa retornar. ' +
+        'Use só quando a pessoa já tiver informado, nesta conversa, o nome e um telefone com DDD ou e-mail. ' +
+        'Nunca invente dados. Se chamar de novo na mesma conversa, os dados são atualizados.',
+      parametros: {
+        type: 'object',
+        properties: {
+          nome: {
+            type: 'string',
+            description: 'Nome da pessoa, como ela informou.',
+          },
+          contato: {
+            type: 'string',
+            description: 'Telefone com DDD ou e-mail, como a pessoa informou.',
+          },
+          interesse: {
+            type: 'string',
+            description:
+              'Resumo curto do que a pessoa quer (produto, data, quantidade...).',
+          },
+        },
+        required: ['nome', 'contato', 'interesse'],
+      },
+      executar: async (entrada) => {
+        const v = validarLead(entrada);
+        if (!v.ok) {
+          return {
+            erro: true,
+            texto: `Não salvei: ${v.problemas.join('; ')}. Peça o dado que falta à pessoa.`,
+          };
+        }
+        await this.repo.upsert({ empresaId, conversaId, ...v.dados }, [
+          'conversaId',
+        ]);
+        this.log.log(
+          `Lead salvo na conversa ${conversaId} (${v.dados.tipoContato})`,
+        );
+        return {
+          texto:
+            'Contato salvo. Confirme para a pessoa que a equipe vai entrar em contato, sem repetir os dados dela.',
+        };
+      },
+    };
+  }
+}

@@ -4,6 +4,7 @@ import { Conversa } from '../conversas/conversa.entity.js';
 import { Mensagem } from '../conversas/mensagem.entity.js';
 import { EmpresasModule } from '../empresas/empresas.module.js';
 import { IaModule } from '../ia/ia.module.js';
+import { LeadsModule } from '../leads/leads.module.js';
 import { ChatController } from './chat.controller.js';
 import { ChatService } from './chat.service.js';
 
@@ -11,6 +12,7 @@ import { ChatService } from './chat.service.js';
   imports: [
     IaModule,
     EmpresasModule,
+    LeadsModule,
     TypeOrmModule.forFeature([Conversa, Mensagem]),
   ],
   controllers: [ChatController],
