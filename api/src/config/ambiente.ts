@@ -42,7 +42,8 @@ export function lerAmbiente(env: NodeJS.ProcessEnv = process.env): Ambiente {
     ia: {
       provedor: umDe('IA_PROVEDOR', env.IA_PROVEDOR, PROVEDORES_IA, 'simulado'),
       ollama: {
-        url: (env.OLLAMA_URL?.trim() || 'http://localhost:11434').replace(
+        // 127.0.0.1, não localhost: no Windows o localhost tenta IPv6 antes e soma ~2 s por pedido.
+        url: (env.OLLAMA_URL?.trim() || 'http://127.0.0.1:11434').replace(
           /\/$/,
           '',
         ),

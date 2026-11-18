@@ -130,8 +130,9 @@ export class ProvedorOllama implements ProvedorIa {
           // O padrão do Ollama é 4096 tokens: o que passar disso (base de conhecimento
           // grande, conversa longa) é cortado sem aviso. Sobe para caber a base inteira.
           options: { num_ctx: this.contexto },
-          // Mantém o modelo carregado na placa por 30 min: carregar leva ~1-2 min.
-          keep_alive: '30m',
+          // Modelo só fica na memória enquanto o chat está em uso: sai 5 min depois da
+          // última mensagem (ocupa ~10 GB de VRAM com este contexto). A volta custa uns segundos.
+          keep_alive: '5m',
           tools: ferramentas.map((f) => ({
             type: 'function',
             function: {

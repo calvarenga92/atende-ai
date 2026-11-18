@@ -8,7 +8,7 @@ describe('lerAmbiente', () => {
     expect(a.porta).toBe(3100);
     expect(a.ia.provedor).toBe('simulado');
     expect(a.ia.ollama).toEqual({
-      url: 'http://localhost:11434',
+      url: 'http://127.0.0.1:11434',
       modelo: 'qwen3:8b',
       contexto: 32768,
     });
