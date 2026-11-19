@@ -1,0 +1,27 @@
+{
+  "name": "atende-ai-widget",
+  "version": "0.0.1",
+  "description": "Widget do Atende AI: o chat que a empresa cola no próprio site com uma tag <script>.",
+  "author": "Claudio Alvarenga",
+  "private": true,
+  "license": "UNLICENSED",
+  "type": "module",
+  "scripts": {
+    "build": "esbuild src/index.ts --bundle --minify --format=iife --target=es2020 --outfile=dist/widget.js",
+    "dev": "esbuild src/index.ts --bundle --format=iife --target=es2020 --sourcemap --outfile=dist/widget.js --watch",
+    "lint": "oxlint src/",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "verificar": "npm run typecheck && npm run lint && npm test && npm run build"
+  },
+  "engines": {
+    "node": ">=24"
+  },
+  "devDependencies": {
+    "esbuild": "^0.28.2",
+    "happy-dom": "^21.0.4",
+    "oxlint": "^1.94.0",
+    "typescript": "^7.0.2",
+    "vitest": "^5.1.1"
+  }
+}
