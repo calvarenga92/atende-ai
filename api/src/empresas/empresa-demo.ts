@@ -12,6 +12,7 @@ export const EMPRESA_DEMO: DadosEmpresa = {
   mensagemBoasVindas:
     'Oi! Eu sou a Lia, da Padaria Pão de Ouro. Posso ajudar com horários, cardápio ou encomendas?',
   corPrimaria: '#b45309',
+  sugestoes: ['Horários', 'Cardápio e preços', 'Encomendar bolo'],
   conhecimento: [
     '# Padaria Pão de Ouro (empresa fictícia de demonstração)',
     '',

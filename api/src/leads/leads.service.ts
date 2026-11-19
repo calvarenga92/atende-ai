@@ -23,8 +23,13 @@ export class LeadsService {
   /**
    * Ferramenta `salvar_lead` presa a uma conversa: a IA só informa os dados da pessoa,
    * nunca para qual empresa ou conversa salvar (isso não pode vir do modelo).
+   * `aoSalvar` roda depois de gravar, para o chat avisar o visitante.
    */
-  ferramentaSalvar(empresaId: string, conversaId: string): FerramentaIa {
+  ferramentaSalvar(
+    empresaId: string,
+    conversaId: string,
+    aoSalvar?: () => void,
+  ): FerramentaIa {
     return {
       nome: 'salvar_lead',
       descricao:
@@ -64,6 +69,7 @@ export class LeadsService {
         this.log.log(
           `Lead salvo na conversa ${conversaId} (${v.dados.tipoContato})`,
         );
+        aoSalvar?.();
         return {
           texto:
             'Contato salvo. Confirme para a pessoa que a equipe vai entrar em contato, sem repetir os dados dela.',

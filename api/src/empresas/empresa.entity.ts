@@ -40,6 +40,10 @@ export class Empresa {
   @Column({ name: 'cor_primaria', default: '#4f46e5' })
   corPrimaria: string;
 
+  /** Atalhos do widget, mostrados embaixo das boas-vindas. Clicar envia o texto. */
+  @Column('text', { array: true, default: () => "'{}'" })
+  sugestoes: string[];
+
   @CreateDateColumn({ name: 'criado_em', type: 'timestamptz' })
   criadoEm: Date;
 

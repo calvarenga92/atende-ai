@@ -11,9 +11,15 @@ export type DadosEmpresa = Pick<
   | 'conhecimento'
   | 'mensagemBoasVindas'
   | 'corPrimaria'
+  | 'sugestoes'
 >;
 
-const LIMITES: Record<keyof DadosEmpresa, number> = {
+type CampoTexto = Exclude<keyof DadosEmpresa, 'sugestoes'>;
+
+export const MAX_SUGESTOES = 4;
+export const MAX_CARACTERES_SUGESTAO = 40;
+
+const LIMITES: Record<CampoTexto, number> = {
   slug: 60,
   nome: 120,
   nomeBot: 60,
@@ -24,7 +30,7 @@ const LIMITES: Record<keyof DadosEmpresa, number> = {
   mensagemBoasVindas: 500,
   corPrimaria: 7,
 };
-const OBRIGATORIOS: (keyof DadosEmpresa)[] = [
+const OBRIGATORIOS: CampoTexto[] = [
   'slug',
   'nome',
   'nomeBot',
@@ -47,7 +53,7 @@ export function validarDadosEmpresa(
   const saida: Partial<DadosEmpresa> = {};
   const erros: Record<string, string> = {};
 
-  for (const campo of Object.keys(LIMITES) as (keyof DadosEmpresa)[]) {
+  for (const campo of Object.keys(LIMITES) as CampoTexto[]) {
     const valor = entrada[campo];
     if (valor === undefined) {
       if (!parcial && OBRIGATORIOS.includes(campo))
@@ -79,6 +85,29 @@ export function validarDadosEmpresa(
     erros.corPrimaria = 'Use o formato #RRGGBB.';
   }
 
+  if (entrada.sugestoes !== undefined) {
+    const sugestoes = validarSugestoes(entrada.sugestoes);
+    if (typeof sugestoes === 'string') erros.sugestoes = sugestoes;
+    else saida.sugestoes = sugestoes;
+  }
+
   if (Object.keys(erros).length) throw dadosInvalidos(erros);
   return saida;
+}
+
+/** Lista de atalhos do widget: textos curtos, sem repetição. Devolve a mensagem de erro, se houver. */
+function validarSugestoes(valor: unknown): string[] | string {
+  if (!Array.isArray(valor) || valor.some((s) => typeof s !== 'string')) {
+    return 'Envie uma lista de textos.';
+  }
+  const limpas = [
+    ...new Set((valor as string[]).map((s) => s.trim()).filter(Boolean)),
+  ];
+  if (limpas.length > MAX_SUGESTOES) {
+    return `No máximo ${MAX_SUGESTOES} sugestões.`;
+  }
+  if (limpas.some((s) => s.length > MAX_CARACTERES_SUGESTAO)) {
+    return `Cada sugestão tem no máximo ${MAX_CARACTERES_SUGESTAO} caracteres.`;
+  }
+  return limpas;
 }

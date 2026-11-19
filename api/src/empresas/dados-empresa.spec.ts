@@ -51,3 +51,30 @@ describe('validarDadosEmpresa', () => {
     });
   });
 });
+
+describe('sugestões do widget', () => {
+  it('apara, descarta vazias e repetidas', () => {
+    expect(
+      validarDadosEmpresa(
+        { sugestoes: [' Horários ', '', 'Horários', 'Cardápio'] },
+        true,
+      ),
+    ).toEqual({ sugestoes: ['Horários', 'Cardápio'] });
+  });
+
+  it('recusa formato errado, excesso e texto longo', () => {
+    expect(
+      camposComErro(() => validarDadosEmpresa({ sugestoes: 'Horários' }, true)),
+    ).toHaveProperty('sugestoes');
+    expect(
+      camposComErro(() =>
+        validarDadosEmpresa({ sugestoes: ['a', 'b', 'c', 'd', 'e'] }, true),
+      ),
+    ).toHaveProperty('sugestoes');
+    expect(
+      camposComErro(() =>
+        validarDadosEmpresa({ sugestoes: ['x'.repeat(41)] }, true),
+      ),
+    ).toHaveProperty('sugestoes');
+  });
+});

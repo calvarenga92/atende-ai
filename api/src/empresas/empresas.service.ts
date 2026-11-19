@@ -16,7 +16,16 @@ export class EmpresasService implements OnApplicationBootstrap {
 
   async onApplicationBootstrap() {
     if (process.env.SEMEAR_DEMO !== '1') return;
-    if (await this.repo.existsBy({ slug: EMPRESA_DEMO.slug })) return;
+    const existente = await this.repo.findOneBy({ slug: EMPRESA_DEMO.slug });
+    if (existente) {
+      // Banco local criado antes dos atalhos do widget: completa sem mexer no resto.
+      if (!existente.sugestoes.length) {
+        await this.repo.update(existente.id, {
+          sugestoes: EMPRESA_DEMO.sugestoes,
+        });
+      }
+      return;
+    }
     await this.repo.save(this.repo.create(EMPRESA_DEMO));
     this.log.log(`Empresa demo criada: ${EMPRESA_DEMO.slug}`);
   }

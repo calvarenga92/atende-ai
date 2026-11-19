@@ -16,6 +16,8 @@ import { montarPromptSistema } from './prompt-sistema.js';
 export type EventoChat =
   | { tipo: 'inicio'; conversaId: string }
   | { tipo: 'texto'; texto: string }
+  /** O contato do visitante foi salvo agora (o widget mostra a confirmação). */
+  | { tipo: 'lead' }
   | { tipo: 'fim' }
   | { tipo: 'erro'; mensagem: string };
 
@@ -45,6 +47,7 @@ export class ChatService {
       nomeBot: e.nomeBot,
       mensagemBoasVindas: e.mensagemBoasVindas,
       corPrimaria: e.corPrimaria,
+      sugestoes: e.sugestoes,
     };
   }
 
@@ -83,7 +86,11 @@ export class ChatService {
           papel: m.papel,
           conteudo: m.conteudo,
         })),
-        ferramentas: [this.leads.ferramentaSalvar(empresa.id, conversa.id)],
+        ferramentas: [
+          this.leads.ferramentaSalvar(empresa.id, conversa.id, () =>
+            emitir({ tipo: 'lead' }),
+          ),
+        ],
         aoTexto: (pedaco) => emitir({ tipo: 'texto', texto: pedaco }),
         sinal,
       });

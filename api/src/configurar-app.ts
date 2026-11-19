@@ -1,4 +1,5 @@
 import type { INestApplication } from '@nestjs/common';
+import { join } from 'node:path';
 import express from 'express';
 import { FiltroErros } from './comum/filtro-erros.js';
 
@@ -15,7 +16,16 @@ export function configurarApp(app: INestApplication): void {
     origin: true,
     allowedHeaders: ['Content-Type', 'Authorization'],
   });
-  // Página de teste do chat: http://localhost:3100/teste.html
+  // Páginas de teste e demo: http://localhost:3100/teste.html e /demo.html
   app.use(express.static('publico'));
+  // O widget (gerado em ../widget com `npm run build`): /widget.js.
+  // Cache curto: a empresa não precisa trocar a tag para receber a versão nova.
+  app.use(
+    express.static(join(process.cwd(), '..', 'widget', 'dist'), {
+      maxAge: '5m',
+      setHeaders: (res) =>
+        res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin'),
+    }),
+  );
   app.enableShutdownHooks();
 }
