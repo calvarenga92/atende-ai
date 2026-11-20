@@ -18,6 +18,14 @@ npm run dev
 
 Para mexer no widget com recarga automática: `cd widget && npm run dev` (em outro terminal).
 
+O painel (em outro terminal, com a API rodando):
+
+```bash
+cd painel && npm install && npm run dev   # http://localhost:5173
+```
+
+Na tela de login, o botão "Usar a conta demo" preenche a conta da padaria.
+
 ### Qual IA responde
 
 | `IA_PROVEDOR` | O que é | Custo |
@@ -98,7 +106,22 @@ Funciona nos três modos de IA: no `simulado`, qualquer telefone ou e-mail na me
 4. ~~Widget embutível (`<script>` no site do cliente)~~
 5. Painel admin em React com login
 
-## Login e painel
+## Painel
+
+React 19 + Vite + React Router, em `painel/`. Segue as telas 8 e 9 do Figma "Atende AI — Telas".
+
+- **Entrar / Criar conta.** O cadastro sugere o endereço do bot a partir do nome da empresa.
+- **Leads.** Números do dia e da semana, filtro por telefone ou e-mail, busca sem ligar para acento,
+  contato clicável (`tel:` / `mailto:`) e exportação em CSV que abre direto no Excel em português.
+  O CSV neutraliza fórmula vinda do chat (`=`, `+`, `-`, `@`).
+- **Bot e base.** Nome, cor, tom, boas-vindas, sugestões, instruções e base de conhecimento, com
+  **prévia ao vivo** do widget. A prévia usa a mesma função de cor do widget (`widget/src/cores.ts`).
+  Salva só o que mudou, mostra o erro de cada campo e avisa antes de fechar com alteração pendente.
+- **Instalar no site.** A tag pronta para copiar.
+- Sessão vencida em qualquer tela leva de volta ao login. No celular, o menu vai para o topo e a tabela vira cartões.
+- 19 testes (Vitest + Testing Library) com a API fingida: login, cadastro, sessão vencida, filtros, salvar, erros por campo.
+
+## Login (API)
 
 - **A empresa sai do login, nunca da URL.** As rotas do painel não recebem slug nem id: não tem como pedir
   os dados de outra empresa.
