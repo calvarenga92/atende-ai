@@ -5,7 +5,7 @@ import { lerAmbiente } from './config/ambiente.js';
 
 const ambiente = lerAmbiente();
 const app = await NestFactory.create(AppModule);
-configurarApp(app);
+configurarApp(app, ambiente.origensCors);
 await app.listen(ambiente.porta);
 console.log(
   `API em http://localhost:${ambiente.porta}/api · teste em http://localhost:${ambiente.porta}/teste.html`,

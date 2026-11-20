@@ -11,9 +11,11 @@ import { CodigoErro, ErroAplicacao } from './erro-aplicacao.js';
 
 const CODIGO_POR_STATUS: Partial<Record<number, CodigoErro>> = {
   [HttpStatus.BAD_REQUEST]: 'DADOS_INVALIDOS',
+  [HttpStatus.UNAUTHORIZED]: 'NAO_AUTENTICADO',
   [HttpStatus.NOT_FOUND]: 'NAO_ENCONTRADO',
   [HttpStatus.CONFLICT]: 'CONFLITO',
   [HttpStatus.UNPROCESSABLE_ENTITY]: 'DADOS_INVALIDOS',
+  [HttpStatus.TOO_MANY_REQUESTS]: 'MUITAS_TENTATIVAS',
   [HttpStatus.SERVICE_UNAVAILABLE]: 'FALHA_TRANSITORIA',
 };
 

@@ -2,6 +2,8 @@ export type CodigoErro =
   | 'NAO_ENCONTRADO'
   | 'DADOS_INVALIDOS'
   | 'CONFLITO'
+  | 'NAO_AUTENTICADO'
+  | 'MUITAS_TENTATIVAS'
   | 'FALHA_TRANSITORIA'
   | 'ERRO_DESCONHECIDO';
 
@@ -35,3 +37,10 @@ export const dadosInvalidos = (campos: Record<string, string>) =>
 
 export const conflito = (mensagem: string) =>
   new ErroAplicacao(409, 'CONFLITO', mensagem);
+
+export const naoAutenticado = (
+  mensagem = 'Entre na sua conta para continuar.',
+) => new ErroAplicacao(401, 'NAO_AUTENTICADO', mensagem);
+
+export const muitasTentativas = (mensagem: string) =>
+  new ErroAplicacao(429, 'MUITAS_TENTATIVAS', mensagem);

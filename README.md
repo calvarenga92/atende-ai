@@ -28,6 +28,10 @@ Para mexer no widget com recarga automática: `cd widget && npm run dev` (em out
 
 - http://localhost:3100/demo.html: site fictício da padaria com o widget de verdade.
 - http://localhost:3100/teste.html: página crua do chat, para depurar a API. Outra empresa: `teste.html?empresa=<slug>`.
+- Conta demo do painel (só em dev): `demo@padaria-demo.local` / `demo12345`.
+
+Ponta a ponta do login e do painel (Postgres em memória, não mexe no banco local):
+`cd api && npm run build && npm run e2e`.
 
 ## Widget
 
@@ -63,9 +67,14 @@ Para mexer no widget com recarga automática: `cd widget && npm run dev` (em out
 | GET | `/api/saude` | Saúde da API e do banco |
 | GET | `/api/chat/:slug/config` | Dados públicos do bot (nome, cor, boas-vindas) |
 | POST | `/api/chat/:slug` | `{ mensagem, conversaId? }` → resposta em streaming (SSE) |
-| GET/POST | `/api/empresas` | Lista / cria empresa |
-| GET/PATCH | `/api/empresas/:slug` | Lê / edita empresa (persona, base de conhecimento) |
-| GET | `/api/empresas/:slug/leads` | Contatos deixados pelos visitantes no chat |
+| POST | `/api/auth/cadastro` | `{ nome, email, senha, empresa: { nome, slug } }` → cria empresa + conta e já entra |
+| POST | `/api/auth/entrar` | `{ email, senha }` → `{ token, expiraEm, usuario, empresa }` |
+| POST | `/api/auth/sair` | Encerra a sessão do token |
+| GET | `/api/auth/eu` | Conta e empresa do token |
+| GET/PATCH | `/api/painel/empresa` | Lê / edita a própria empresa (persona, base de conhecimento, cor, sugestões) |
+| GET | `/api/painel/leads` | Contatos deixados pelos visitantes no chat |
+
+As rotas `/api/auth/eu`, `/api/auth/sair` e `/api/painel/*` pedem `Authorization: Bearer <token>`.
 
 Eventos do streaming: `inicio` (com `conversaId`), `texto` (pedaços da resposta), `lead` (contato salvo agora), `fim`, `erro`.
 
@@ -88,3 +97,17 @@ Funciona nos três modos de IA: no `simulado`, qualquer telefone ou e-mail na me
 3. ~~Captura de leads (ferramenta `salvar_lead`)~~
 4. ~~Widget embutível (`<script>` no site do cliente)~~
 5. Painel admin em React com login
+
+## Login e painel
+
+- **A empresa sai do login, nunca da URL.** As rotas do painel não recebem slug nem id: não tem como pedir
+  os dados de outra empresa.
+- **Senha com scrypt** (do próprio Node), com sal por senha. O formato guarda o custo, que pode subir sem invalidar as antigas.
+- **Sessão com token opaco** (256 bits) no cabeçalho `Authorization`, válida por 7 dias. O banco guarda só o
+  SHA-256 do token. Sair apaga a sessão na hora. Sem cookie, então não há CSRF para tratar.
+- **Login não entrega quem tem conta:** a mensagem é a mesma para e-mail inexistente e senha errada, e o tempo também
+  (confere contra um hash falso).
+- **5 senhas erradas** no mesmo IP + e-mail travam por 15 minutos (429).
+- **Cadastro é atômico:** empresa e conta são criadas juntas ou nenhuma das duas.
+- **CORS em duas camadas:** `/api/chat` e `/api/saude` aceitam qualquer site (o widget roda no site do cliente);
+  login e painel só respondem às origens de `CORS_ORIGENS`.
