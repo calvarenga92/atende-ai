@@ -55,6 +55,23 @@ export function Acesso({ modo }: Props) {
     }
   }
 
+  /** Conta pública de demonstração: um clique e já está dentro (no ar, só leitura). */
+  async function entrarNaDemo() {
+    setEmail(CONTA_DEMO.email);
+    setSenha(CONTA_DEMO.senha);
+    setErros({});
+    setErroGeral('');
+    setEnviando(true);
+    try {
+      await entrar(CONTA_DEMO.email, CONTA_DEMO.senha);
+    } catch (err) {
+      setEnviando(false);
+      setErroGeral(
+        err instanceof ErroApi ? err.message : 'Algo deu errado. Tente de novo.',
+      );
+    }
+  }
+
   return (
     <div className="acesso">
       <section className="acesso-marca" aria-hidden="true">
@@ -154,16 +171,14 @@ export function Acesso({ modo }: Props) {
           )}
         </p>
 
-        {!cadastro && import.meta.env.DEV && (
+        {!cadastro && (
           <button
             type="button"
             className="demo"
-            onClick={() => {
-              setEmail(CONTA_DEMO.email);
-              setSenha(CONTA_DEMO.senha);
-            }}
+            disabled={enviando}
+            onClick={() => void entrarNaDemo()}
           >
-            Usar a conta demo (Padaria Pão de Ouro)
+            Entrar na conta demo (Padaria Pão de Ouro)
           </button>
         )}
       </section>
