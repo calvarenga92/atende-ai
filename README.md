@@ -1,8 +1,19 @@
 # Atende AI
 
 Chatbot com IA para empresas: cada empresa cadastra a persona do bot e a base de conhecimento
-(FAQ, horários, preços), e cola um widget no site. O bot responde os visitantes com a Claude,
-só com base no que a empresa informou.
+(FAQ, horários, preços), e cola um widget no site. O bot responde os visitantes só com base no
+que a empresa informou e passa os interessados para a equipe.
+
+## No ar
+
+| | |
+|---|---|
+| **Site de exemplo** (padaria fictícia com a assistente Lia) | https://padaria-pao-de-ouro-demo.vercel.app |
+| **Painel** (botão "Entrar na conta demo", só leitura) | https://calvarenga-atende-ai.vercel.app |
+| **API** | https://calvarenga-atende-ai-api.vercel.app/api/saude |
+
+Tudo na Vercel: a API roda como função (`api/api/index.js` chama o Nest compilado), o banco é
+PostgreSQL no Neon (São Paulo) e a IA é o Groq no plano gratuito. Cada push na `main` publica os três.
 
 ## Rodar local
 
@@ -32,7 +43,11 @@ Na tela de login, o botão "Usar a conta demo" preenche a conta da padaria.
 |---|---|---|
 | `simulado` (padrão) | Resposta de mentira, para desenvolver e para demo pública | zero |
 | `ollama` | IA local via [Ollama](https://ollama.com) (`ollama pull qwen3:8b`) | zero |
+| `openai` | Qualquer API no formato de chat da OpenAI: Groq (produção, `openai/gpt-oss-120b`), Gemini, Ollama `/v1` (`IA_URL`, `IA_CHAVE`, `IA_MODELO`) | zero no plano grátis do Groq |
 | `anthropic` | Claude, pela API da Anthropic (`ANTHROPIC_API_KEY`) | pago por uso |
+
+No plano grátis o Groq limita tokens por minuto. Quando estoura, a API espera o tempo pedido (até 8 s),
+tenta de novo e depois passa para `IA_MODELO_RESERVA`, que tem cota própria.
 
 - http://localhost:3100/demo.html: site fictício da padaria com o widget de verdade.
 - http://localhost:3100/teste.html: página crua do chat, para depurar a API. Outra empresa: `teste.html?empresa=<slug>`.
@@ -67,6 +82,8 @@ Ponta a ponta do login e do painel (Postgres em memória, não mexe no banco loc
 - **No celular,** a janela ocupa a tela toda.
 - **Se a empresa não existir ou a API estiver fora,** o widget simplesmente não aparece.
 - **O texto da IA entra sempre como texto, nunca como HTML.**
+- **Botões do site abrem o chat:** qualquer elemento com `data-atende-ai-abrir` (ex.: "Fale conosco"),
+  ou `window.AtendeAI.abrir()` por código.
 
 ## API
 
@@ -94,7 +111,16 @@ telefone ou e-mail. Com os dados em mãos, a IA chama a ferramenta `salvar_lead`
 - valida e normaliza o contato (telefone com DDD vira só dígitos, e-mail em minúsculas);
 - devolve o problema para a IA quando falta algo (ex.: telefone sem DDD), e ela pede de novo;
 - fica presa à conversa: a IA informa só os dados da pessoa, nunca a empresa ou a conversa;
-- grava um lead por conversa (chamar de novo atualiza).
+- grava um lead por conversa (chamar de novo atualiza);
+- ao salvar, devolve a confirmação pronta para o visitante: não há outra rodada da IA nessa hora,
+  então a mensagem sai sempre certa (e gasta menos cota).
+
+## Produção
+
+- **Conta demo só de leitura** (`DEMO_SOMENTE_LEITURA=1`): a prévia funciona, salvar responde 403 com uma
+  mensagem explicando. `SEMEAR_DEMO=1` cria a padaria e a conta demo na subida.
+- **Limite por visitante:** `CHAT_MAX_POR_IP` mensagens a cada 10 minutos (padrão 30), para proteger a cota da IA.
+- **Data de hoje** vai para a IA fora do prompt de sistema, para o cache continuar valendo: ela recusa datas que já passaram.
 
 Funciona nos três modos de IA: no `simulado`, qualquer telefone ou e-mail na mensagem dispara a ferramenta.
 
@@ -104,7 +130,9 @@ Funciona nos três modos de IA: no `simulado`, qualquer telefone ou e-mail na me
 2. ~~Base de conhecimento no prompt (com cache)~~
 3. ~~Captura de leads (ferramenta `salvar_lead`)~~
 4. ~~Widget embutível (`<script>` no site do cliente)~~
-5. Painel admin em React com login
+5. ~~Painel admin em React com login~~
+6. ~~No ar: Vercel + Neon + Groq, conta demo só leitura, limite por visitante~~
+7. Visão geral e conversas no painel, consumo de tokens por empresa
 
 ## Painel
 
@@ -119,7 +147,7 @@ React 19 + Vite + React Router, em `painel/`. Segue as telas 8 e 9 do Figma "Ate
   Salva só o que mudou, mostra o erro de cada campo e avisa antes de fechar com alteração pendente.
 - **Instalar no site.** A tag pronta para copiar.
 - Sessão vencida em qualquer tela leva de volta ao login. No celular, o menu vai para o topo e a tabela vira cartões.
-- 19 testes (Vitest + Testing Library) com a API fingida: login, cadastro, sessão vencida, filtros, salvar, erros por campo.
+- 20 testes (Vitest + Testing Library) com a API fingida: login, cadastro, sessão vencida, filtros, salvar, erros por campo.
 
 ## Login (API)
 
