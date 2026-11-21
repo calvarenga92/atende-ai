@@ -126,8 +126,8 @@ describe('ProvedorOpenAi', () => {
   });
 
   it('avisa quando o plano grátis estoura (429)', async () => {
-    vi.spyOn(globalThis, 'fetch').mockResolvedValue(
-      new Response('rate limit', { status: 429 }),
+    vi.spyOn(globalThis, 'fetch').mockImplementation(
+      async () => new Response('Please try again in 1ms', { status: 429 }),
     );
     const p = new ProvedorOpenAi('https://x.test/v1', 'k', 'm');
     await expect(
@@ -138,6 +138,33 @@ describe('ProvedorOpenAi', () => {
         sinal: new AbortController().signal,
       }),
     ).rejects.toThrow('limite de uso');
+  });
+});
+
+describe('ProvedorOpenAi no limite de uso', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('espera e tenta de novo, depois passa para o modelo de reserva', async () => {
+    const modelos: string[] = [];
+    vi.spyOn(globalThis, 'fetch').mockImplementation(async (_url, init) => {
+      const { model } = JSON.parse(init?.body as string) as { model: string };
+      modelos.push(model);
+      return model === 'reserva'
+        ? streamSse([{ choices: [{ delta: { content: 'Oi!' } }] }])
+        : new Response('try again in 5ms', { status: 429 });
+    });
+    const p = new ProvedorOpenAi('https://x.test/v1', 'k', 'principal', [
+      'reserva',
+    ]);
+    const pedacos: string[] = [];
+    await p.responder({
+      sistema: 'S',
+      mensagens: [],
+      aoTexto: (t) => pedacos.push(t),
+      sinal: new AbortController().signal,
+    });
+    expect(modelos).toEqual(['principal', 'principal', 'reserva']);
+    expect(pedacos.join('')).toBe('Oi!');
   });
 });
 

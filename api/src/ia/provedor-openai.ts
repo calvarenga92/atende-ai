@@ -55,8 +55,10 @@ export class ProvedorOpenAi implements ProvedorIa {
     private readonly url: string,
     private readonly chave: string,
     private readonly modelo: string,
+    /** Modelos de reserva (cota separada no Groq), usados quando o principal estoura o limite. */
+    private readonly reservas: string[] = [],
   ) {
-    this.nome = `openai-compatível (${modelo} em ${new URL(url).host})`;
+    this.nome = `openai-compatível (${[modelo, ...reservas].join(' → ')} em ${new URL(url).host})`;
   }
 
   async responder(pedido: PedidoIa): Promise<RespostaIa> {
@@ -69,12 +71,14 @@ export class ProvedorOpenAi implements ProvedorIa {
     const saida = separadorDeRodadas(aoTexto);
     let entrada = 0;
     let gerados = 0;
+    const usados = new Set<string>();
 
     for (let rodada = 1; ; rodada++) {
       saida.novaRodada();
       const r = await this.rodada(historico, ferramentas, saida.aoTexto, sinal);
       entrada += r.entrada;
       gerados += r.saida;
+      usados.add(r.modelo);
 
       const chamadas = r.chamadas.map((c) => ({
         type: 'tool_use',
@@ -107,8 +111,75 @@ export class ProvedorOpenAi implements ProvedorIa {
 
     return {
       mensagens: novas,
-      consumo: `entrada ${entrada}, saída ${gerados} tokens`,
+      consumo: `entrada ${entrada}, saída ${gerados} tokens (${[...usados].join(', ')})`,
     };
+  }
+
+  /**
+   * Faz o pedido. No limite de uso (429), espera o que a API pedir (até
+   * ESPERA_MAX_MS) e tenta de novo; se não der, passa para o modelo de reserva.
+   */
+  private async pedir(
+    historico: MensagemOpenAi[],
+    ferramentas: FerramentaIa[],
+    sinal: AbortSignal,
+  ): Promise<{
+    resposta: Response & { body: ReadableStream<Uint8Array> };
+    modelo: string;
+  }> {
+    let ultimo = '';
+    for (const modelo of [this.modelo, ...this.reservas]) {
+      for (let tentativa = 1; tentativa <= 2; tentativa++) {
+        const resposta = await fetch(`${this.url}/chat/completions`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            ...(this.chave ? { Authorization: `Bearer ${this.chave}` } : {}),
+          },
+          signal: sinal,
+          body: JSON.stringify({
+            model: modelo,
+            stream: true,
+            stream_options: { include_usage: true },
+            // Atendimento pede resposta firme, não criativa.
+            temperature: 0.3,
+            max_tokens: 1024,
+            ...(ferramentas.length
+              ? {
+                  tools: ferramentas.map((f) => ({
+                    type: 'function',
+                    function: {
+                      name: f.nome,
+                      description: f.descricao,
+                      parameters: f.parametros,
+                    },
+                  })),
+                }
+              : {}),
+            messages: historico,
+          }),
+        });
+        if (resposta.ok && resposta.body) {
+          return {
+            resposta: resposta as Response & {
+              body: ReadableStream<Uint8Array>;
+            },
+            modelo,
+          };
+        }
+        const detalhe = await resposta.text().catch(() => '');
+        if (resposta.status !== 429) {
+          throw new Error(
+            `IA respondeu ${resposta.status}: ${detalhe.slice(0, 300)}`,
+          );
+        }
+        ultimo = detalhe.slice(0, 300);
+        const espera = esperaPedida(resposta, detalhe);
+        if (tentativa === 2 || espera > ESPERA_MAX_MS) break;
+        await dormir(espera, sinal);
+      }
+    }
+    throw new Error(`IA no limite de uso (429): ${ultimo}`);
   }
 
   private async rodada(
@@ -117,45 +188,11 @@ export class ProvedorOpenAi implements ProvedorIa {
     aoTexto: (pedaco: string) => void,
     sinal: AbortSignal,
   ) {
-    const resposta = await fetch(`${this.url}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(this.chave ? { Authorization: `Bearer ${this.chave}` } : {}),
-      },
-      signal: sinal,
-      body: JSON.stringify({
-        model: this.modelo,
-        stream: true,
-        stream_options: { include_usage: true },
-        // Atendimento pede resposta firme, não criativa.
-        temperature: 0.3,
-        max_tokens: 1024,
-        ...(ferramentas.length
-          ? {
-              tools: ferramentas.map((f) => ({
-                type: 'function',
-                function: {
-                  name: f.nome,
-                  description: f.descricao,
-                  parameters: f.parametros,
-                },
-              })),
-            }
-          : {}),
-        messages: historico,
-      }),
-    });
-
-    if (!resposta.ok || !resposta.body) {
-      const detalhe = await resposta.text().catch(() => '');
-      if (resposta.status === 429) {
-        throw new Error(`IA no limite de uso (429): ${detalhe.slice(0, 300)}`);
-      }
-      throw new Error(
-        `IA respondeu ${resposta.status}: ${detalhe.slice(0, 300)}`,
-      );
-    }
+    const { resposta, modelo } = await this.pedir(
+      historico,
+      ferramentas,
+      sinal,
+    );
 
     let texto = '';
     const porIndice = new Map<number, ChamadaOpenAi>();
@@ -206,8 +243,34 @@ export class ProvedorOpenAi implements ProvedorIa {
       .sort(([a], [b]) => a - b)
       .map(([, c]) => ({ ...c, id: c.id || `call_${randomUUID()}` }))
       .filter((c) => c.function.name);
-    return { texto, chamadas, entrada, saida };
+    return { texto, chamadas, entrada, saida, modelo };
   }
+}
+
+/** Maior espera aceitável no limite de uso antes de trocar de modelo. */
+const ESPERA_MAX_MS = 8_000;
+
+/** Quanto a API pediu para esperar: cabeçalho retry-after ou "try again in 6.1s". */
+export function esperaPedida(resposta: Response, detalhe: string): number {
+  const cabecalho = Number(resposta.headers.get('retry-after'));
+  if (Number.isFinite(cabecalho) && cabecalho > 0) return cabecalho * 1000;
+  const m = /try again in ([\d.]+)\s*(ms|s)/i.exec(detalhe);
+  if (m) return Math.ceil(Number(m[1]) * (m[2] === 'ms' ? 1 : 1000));
+  return 2_000;
+}
+
+function dormir(ms: number, sinal: AbortSignal): Promise<void> {
+  return new Promise((pronto, falha) => {
+    const t = setTimeout(pronto, ms);
+    sinal.addEventListener(
+      'abort',
+      () => {
+        clearTimeout(t);
+        falha(sinal.reason as Error);
+      },
+      { once: true },
+    );
+  });
 }
 
 function lerJson(texto: string): unknown {

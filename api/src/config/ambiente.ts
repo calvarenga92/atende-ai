@@ -20,7 +20,7 @@ export interface Ambiente {
   ia: {
     provedor: ProvedorIaNome;
     ollama: { url: string; modelo: string; contexto: number };
-    openai: { url: string; chave: string; modelo: string };
+    openai: { url: string; chave: string; modelo: string; reservas: string[] };
     anthropic: { modelo: string; esforco: Esforco };
   };
 }
@@ -77,7 +77,11 @@ export function lerAmbiente(env: NodeJS.ProcessEnv = process.env): Ambiente {
           '',
         ),
         chave: env.IA_CHAVE?.trim() ?? '',
-        modelo: env.IA_MODELO?.trim() || 'llama-3.3-70b-versatile',
+        modelo: env.IA_MODELO?.trim() || 'openai/gpt-oss-120b',
+        reservas: (env.IA_MODELO_RESERVA ?? '')
+          .split(',')
+          .map((m) => m.trim())
+          .filter(Boolean),
       },
       anthropic: {
         modelo: env.ANTHROPIC_MODELO?.trim() || 'claude-opus-5-5',

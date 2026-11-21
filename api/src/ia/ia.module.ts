@@ -25,6 +25,7 @@ import { ProvedorSimulado } from './provedor-simulado.js';
                   ia.openai.url,
                   ia.openai.chave,
                   ia.openai.modelo,
+                  ia.openai.reservas,
                 )
               : ia.provedor === 'anthropic'
                 ? new ProvedorAnthropic(
