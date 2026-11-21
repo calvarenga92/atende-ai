@@ -24,10 +24,29 @@ async function iniciar(script: HTMLScriptElement) {
   const api = criarApi(base, slug);
   try {
     const config = await api.config();
-    montarWidget({ config, api, memoria: criarMemoria(slug) });
+    const widget = montarWidget({ config, api, memoria: criarMemoria(slug) });
+    ligarAtalhos(widget);
   } catch (erro) {
     console.warn('[Atende AI] widget desligado:', erro instanceof Error ? erro.message : erro);
   }
+}
+
+/**
+ * O site pode abrir o chat pelos próprios botões:
+ *   <a href="#" data-atende-ai-abrir>Fale conosco</a>
+ * ou por código: window.AtendeAI.abrir().
+ */
+function ligarAtalhos(widget: { abrir(): void; fechar(): void }) {
+  (window as unknown as { AtendeAI: unknown }).AtendeAI = {
+    abrir: () => widget.abrir(),
+    fechar: () => widget.fechar(),
+  };
+  document.addEventListener('click', (ev) => {
+    const alvo = ev.target instanceof Element ? ev.target.closest('[data-atende-ai-abrir]') : null;
+    if (!alvo) return;
+    ev.preventDefault();
+    widget.abrir();
+  });
 }
 
 const script = acharScript();

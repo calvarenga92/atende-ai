@@ -3,52 +3,385 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Padaria Pão de Ouro · demo do Atende AI</title>
+    <title>Padaria Pão de Ouro · pão quentinho desde as 6h</title>
+    <meta name="description" content="Padaria de bairro na Vila Exemplo: pão francês, pão de queijo, café e bolos de festa sob encomenda. Site fictício de demonstração do Atende AI." />
+    <meta name="theme-color" content="#2b1a0e" />
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%23b45309'/%3E%3Cpath d='M9 19c0-5 3.5-9 7-9s7 4 7 9c0 2-1.5 3-3 3h-8c-1.5 0-3-1-3-3z' fill='%23fde68a'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <style>
+      :root {
+        --creme: #fbf6ee;
+        --creme-2: #f4eadb;
+        --cafe: #2b1a0e;
+        --cafe-2: #5b3a21;
+        --texto: #4a3424;
+        --ambar: #b45309;
+        --ambar-2: #d97706;
+        --mel: #fde68a;
+        --linha: #e8dac4;
+        --raio: 20px;
+        --largura: 1160px;
+      }
       * { box-sizing: border-box; margin: 0; padding: 0; }
-      body { font: 16px/1.5 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif; background: #fffaf2; color: #451a03; }
-      .aviso { background: #1c1917; color: #fafaf9; font-size: 13px; text-align: center; padding: 8px 16px; }
-      .aviso code { background: #292524; padding: 1px 6px; border-radius: 6px; }
-      nav { display: flex; justify-content: space-between; align-items: center; padding: 24px clamp(20px, 5vw, 56px); }
-      .logo { display: flex; align-items: center; gap: 12px; font-size: 22px; font-weight: 800; color: #78350f; }
-      .logo i { width: 40px; height: 40px; border-radius: 12px; background: linear-gradient(135deg, #f59e0b, #b45309); }
-      .menu { display: flex; gap: 28px; font-weight: 600; color: #78350f; }
-      .heroi { display: flex; flex-wrap: wrap; gap: 48px; align-items: center; padding: 32px clamp(20px, 5vw, 56px) 48px; }
-      .heroi > div { flex: 1 1 320px; }
-      h1 { font-size: clamp(40px, 6vw, 58px); line-height: 1.05; font-weight: 800; letter-spacing: -1px; }
-      .heroi p { font-size: 19px; color: #92400e; margin-top: 20px; max-width: 520px; }
-      .btn { display: inline-block; margin-top: 28px; padding: 16px 28px; border-radius: 999px; background: #b45309; color: #fff; font-weight: 700; text-decoration: none; }
-      .foto { flex: 0 1 420px; aspect-ratio: 1 / .9; border-radius: 32px; background: radial-gradient(circle at 30% 30%, #fde68a 0%, #f59e0b 45%, #b45309 100%); }
-      .cards { display: flex; flex-wrap: wrap; gap: 20px; padding: 0 clamp(20px, 5vw, 56px) 120px; max-width: 900px; }
-      .cards div { flex: 1 1 200px; padding: 20px 24px; border-radius: 18px; background: #fff; border: 1px solid #fde7c4; color: #78350f; }
-      .cards b { display: block; font-size: 17px; color: #451a03; }
-      @media (max-width: 640px) { .menu { display: none; } }
+      html { scroll-behavior: smooth; }
+      body { font: 16px/1.6 Inter, system-ui, sans-serif; background: var(--creme); color: var(--texto); -webkit-font-smoothing: antialiased; }
+      img, svg { display: block; }
+      a { color: inherit; }
+      h1, h2, h3 { font-family: Fraunces, Georgia, serif; color: var(--cafe); line-height: 1.08; font-weight: 700; letter-spacing: -0.02em; }
+      .miolo { width: min(100% - 40px, var(--largura)); margin-inline: auto; }
+      .rotulo { display: inline-block; font-size: 13px; font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--ambar); }
+
+      /* Faixa da demonstração */
+      .faixa { background: var(--cafe); color: #f5e9d8; font-size: 13.5px; }
+      .faixa .miolo { display: flex; gap: 12px; align-items: center; justify-content: center; flex-wrap: wrap; padding: 9px 0; text-align: center; }
+      .faixa b { color: var(--mel); font-weight: 600; }
+      .faixa .curto { display: none; }
+      .faixa a { color: var(--mel); font-weight: 600; text-underline-offset: 3px; }
+
+      /* Topo */
+      header { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--creme) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid transparent; transition: border-color .2s; }
+      header.rolou { border-color: var(--linha); }
+      header .miolo { display: flex; align-items: center; justify-content: space-between; gap: 24px; height: 74px; }
+      .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; font-family: Fraunces, Georgia, serif; font-weight: 700; font-size: 22px; color: var(--cafe); }
+      .logo svg { width: 40px; height: 40px; }
+      nav ul { display: flex; gap: 30px; list-style: none; font-weight: 500; }
+      nav a { text-decoration: none; color: var(--cafe-2); }
+      nav a:hover { color: var(--ambar); }
+      .btn { display: inline-flex; align-items: center; gap: 10px; padding: 14px 24px; border-radius: 999px; font-weight: 600; text-decoration: none; border: 0; cursor: pointer; font: inherit; font-weight: 600; transition: transform .15s, background .15s, box-shadow .15s; }
+      .btn:hover { transform: translateY(-1px); }
+      .btn-cheio { background: var(--ambar); color: #fff; box-shadow: 0 8px 24px -10px rgb(180 83 9 / .7); }
+      .btn-cheio:hover { background: #9a4708; }
+      .btn-linha { background: transparent; color: var(--cafe); box-shadow: inset 0 0 0 1.5px var(--cafe-2); }
+      .btn-linha:hover { background: var(--creme-2); }
+      .btn svg { width: 18px; height: 18px; }
+      header .btn { padding: 11px 20px; font-size: 15px; }
+
+      /* Herói */
+      .heroi { padding: 56px 0 88px; }
+      .heroi .miolo { display: grid; grid-template-columns: 1.05fr .95fr; gap: 56px; align-items: center; }
+      .heroi h1 { font-size: clamp(44px, 6.4vw, 78px); margin: 18px 0 22px; }
+      .heroi h1 em { font-style: italic; color: var(--ambar); font-weight: 500; }
+      .heroi p.sub { font-size: 19px; max-width: 520px; color: var(--cafe-2); }
+      .acoes { display: flex; gap: 14px; flex-wrap: wrap; margin-top: 34px; }
+      .selos { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 44px; padding-top: 28px; border-top: 1px solid var(--linha); }
+      .selos div { font-size: 14px; }
+      .selos b { display: block; font-family: Fraunces, Georgia, serif; font-size: 26px; color: var(--cafe); }
+
+      .vitrine { position: relative; aspect-ratio: 1 / 1.02; }
+      .vitrine .fundo { position: absolute; inset: 0; border-radius: 48% 52% 46% 54% / 42% 44% 56% 58%; background: radial-gradient(circle at 32% 28%, #fff3cf 0%, #fbd78a 30%, #e9a13b 62%, #b45309 100%); box-shadow: inset -30px -40px 80px rgb(120 53 15 / .35); }
+      .vitrine .arte { position: absolute; inset: 9% 8% 12%; width: 84%; height: auto; }
+      .etiqueta { position: absolute; background: #fff; border-radius: 16px; padding: 14px 18px; box-shadow: 0 18px 40px -18px rgb(43 26 14 / .45); font-size: 14px; color: var(--cafe); }
+      .etiqueta b { display: block; font-size: 15px; }
+      .etiqueta.um { left: -4%; bottom: 16%; }
+      .etiqueta.dois { right: -2%; top: 10%; display: flex; align-items: center; gap: 10px; }
+      .ponto { width: 10px; height: 10px; border-radius: 50%; background: #16a34a; box-shadow: 0 0 0 4px rgb(22 163 74 / .18); }
+
+      section { scroll-margin-top: 80px; }
+      .bloco { padding: 96px 0; }
+      .cab-bloco { display: flex; justify-content: space-between; align-items: end; gap: 24px; flex-wrap: wrap; margin-bottom: 44px; }
+      .cab-bloco h2 { font-size: clamp(34px, 4.4vw, 52px); margin-top: 10px; }
+      .cab-bloco p { max-width: 420px; color: var(--cafe-2); }
+
+      /* Cardápio */
+      .cardapio { background: #fff; border-block: 1px solid var(--linha); }
+      .itens { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+      .item { border: 1px solid var(--linha); border-radius: var(--raio); padding: 26px; background: var(--creme); display: flex; flex-direction: column; gap: 14px; transition: transform .2s, box-shadow .2s; }
+      .item:hover { transform: translateY(-3px); box-shadow: 0 22px 40px -28px rgb(43 26 14 / .5); }
+      .item .icone { width: 54px; height: 54px; border-radius: 16px; background: #fff; display: grid; place-items: center; color: var(--ambar); border: 1px solid var(--linha); }
+      .item .icone svg { width: 30px; height: 30px; }
+      .item h3 { font-size: 22px; }
+      .item p { font-size: 15px; color: var(--cafe-2); flex: 1; }
+      .preco { display: flex; justify-content: space-between; align-items: baseline; padding-top: 14px; border-top: 1px dashed var(--linha); font-size: 14px; }
+      .preco { gap: 12px; }
+      .preco b { font-family: Fraunces, Georgia, serif; font-size: 22px; color: var(--cafe); white-space: nowrap; }
+
+      /* Encomendas */
+      .encomendas .miolo { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+      .cartao-bolo { border-radius: 32px; padding: 48px; background: var(--cafe); color: #f5e9d8; position: relative; overflow: hidden; }
+      .cartao-bolo h2 { color: #fff; font-size: clamp(34px, 4vw, 48px); margin: 12px 0 18px; }
+      .cartao-bolo .rotulo { color: var(--mel); }
+      .cartao-bolo p { color: #e7d6bf; max-width: 440px; }
+      .cartao-bolo .valor { margin: 30px 0; font-size: 15px; }
+      .cartao-bolo .valor b { display: block; font-family: Fraunces, Georgia, serif; font-size: 46px; color: var(--mel); line-height: 1.1; }
+      .cartao-bolo .enfeite { position: absolute; right: -60px; bottom: -70px; width: 260px; opacity: .14; color: var(--mel); }
+      .sabores { display: grid; gap: 14px; align-content: start; }
+      .sabor { display: flex; align-items: center; gap: 18px; padding: 20px 22px; border-radius: var(--raio); background: #fff; border: 1px solid var(--linha); }
+      .sabor i { width: 46px; height: 46px; border-radius: 50%; flex: none; box-shadow: inset 0 -6px 0 rgb(0 0 0 / .12); }
+      .sabor h3 { font-size: 20px; }
+      .sabor p { font-size: 14px; color: var(--cafe-2); }
+      .regras { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+      .regra { padding: 18px 20px; border-radius: var(--raio); background: var(--creme-2); font-size: 14px; }
+      .regra b { display: block; color: var(--cafe); font-size: 16px; }
+
+      /* Visite */
+      .visite { background: var(--creme-2); }
+      .visite .miolo { display: grid; grid-template-columns: 1.1fr .9fr; gap: 28px; }
+      .mapa { border-radius: 32px; min-height: 360px; position: relative; overflow: hidden; background: #efe2cc; }
+      .mapa svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+      .alfinete { position: absolute; left: 52%; top: 46%; transform: translate(-50%, -100%); background: #fff; border-radius: 14px; padding: 12px 16px; box-shadow: 0 16px 30px -14px rgb(43 26 14 / .5); font-size: 14px; white-space: nowrap; }
+      .alfinete::after { content: ""; position: absolute; left: 50%; bottom: -8px; width: 16px; height: 16px; background: #fff; transform: translateX(-50%) rotate(45deg); border-radius: 3px; }
+      .alfinete b { color: var(--cafe); }
+      .infos { display: grid; gap: 14px; }
+      .info { background: #fff; border-radius: var(--raio); padding: 24px 26px; border: 1px solid var(--linha); }
+      .info h3 { font-size: 20px; margin-bottom: 10px; }
+      .info dl { display: grid; grid-template-columns: 1fr auto; gap: 6px 16px; font-size: 15px; }
+      .info dd { font-weight: 600; color: var(--cafe); }
+      .info p { font-size: 15px; }
+
+      /* Chamada final */
+      .chamada { padding: 96px 0; text-align: center; }
+      .chamada h2 { font-size: clamp(36px, 5vw, 60px); max-width: 760px; margin: 14px auto 20px; }
+      .chamada p { max-width: 540px; margin: 0 auto 32px; color: var(--cafe-2); }
+
+      footer { background: var(--cafe); color: #cbb79c; font-size: 14px; }
+      footer .miolo { display: flex; justify-content: space-between; gap: 20px; flex-wrap: wrap; padding: 36px 0; }
+      footer a { color: var(--mel); }
+      footer .logo { color: #fff; font-size: 19px; }
+      footer .logo svg { width: 32px; height: 32px; }
+
+      @media (max-width: 960px) {
+        nav ul { display: none; }
+        .heroi .miolo, .encomendas .miolo, .visite .miolo { grid-template-columns: 1fr; }
+        .vitrine { max-width: 480px; width: 100%; margin: 12px auto 0; }
+        .itens { grid-template-columns: 1fr 1fr; }
+      }
+      @media (max-width: 620px) {
+        header .btn span { display: none; }
+        .faixa .longo { display: none; }
+        .faixa .curto { display: inline; }
+        .faixa .miolo { gap: 4px 12px; padding: 7px 0; font-size: 13px; }
+        .heroi { padding-top: 28px; }
+        .itens, .regras { grid-template-columns: 1fr; }
+        .cartao-bolo { padding: 34px 26px; }
+        .bloco { padding: 72px 0; }
+        .etiqueta.um { left: 0; }
+        .etiqueta.dois { right: 0; }
+      }
+      @media (prefers-reduced-motion: reduce) { * { transition: none !important; scroll-behavior: auto !important; } }
     </style>
   </head>
   <body>
-    <p class="aviso">
-      Site fictício para demonstrar o widget. Ele entra com uma linha:
-      <code>&lt;script src="/widget.js" data-empresa="padaria-demo" async&gt;&lt;/script&gt;</code>
-    </p>
-    <nav>
-      <div class="logo"><i></i>Pão de Ouro</div>
-      <div class="menu"><span>Cardápio</span><span>Encomendas</span><span>Onde estamos</span></div>
-    </nav>
+    <div class="faixa">
+      <div class="miolo">
+        <span class="longo"><b>Site fictício</b> para demonstrar o Atende AI: a Lia, no canto da tela, é uma assistente com IA que responde com o que a padaria cadastrou.</span>
+        <span class="curto"><b>Site fictício</b> · demo do Atende AI</span>
+        <a href="https://calvarenga-atende-ai.vercel.app" target="_blank" rel="noopener">Ver o painel da padaria →</a>
+      </div>
+    </div>
+
+    <header id="topo">
+      <div class="miolo">
+        <a class="logo" href="#" aria-label="Padaria Pão de Ouro, início">
+          <svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="12" fill="#b45309"/><path d="M10 24c0-6.6 4.5-12 10-12s10 5.4 10 12c0 2.4-1.8 4-4 4H14c-2.2 0-4-1.6-4-4z" fill="#fde68a"/><path d="M15.5 17.5l2 4M20 15.5v5M24.5 17.5l-2 4" stroke="#b45309" stroke-width="1.8" stroke-linecap="round"/></svg>
+          Pão de Ouro
+        </a>
+        <nav aria-label="Seções"><ul><li><a href="#cardapio">Cardápio</a></li><li><a href="#encomendas">Encomendas</a></li><li><a href="#visite">Visite</a></li></ul></nav>
+        <a class="btn btn-cheio" href="#" data-atende-ai-abrir>
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>
+          <span>Fale com a Lia</span>
+        </a>
+      </div>
+    </header>
+
     <main>
       <section class="heroi">
-        <div>
-          <h1>Pão quentinho<br />desde as 6h</h1>
-          <p>Padaria de bairro na Vila Exemplo. Bolos para festa sob encomenda, entrega em até 5 km.</p>
-          <a class="btn" href="#">Ver cardápio</a>
+        <div class="miolo">
+          <div>
+            <span class="rotulo">Padaria de bairro · Vila Exemplo</span>
+            <h1>Pão quentinho <em>desde as 6h</em> da manhã</h1>
+            <p class="sub">Fornada o dia inteiro, café passado na hora e bolos de festa sob encomenda. Entregamos em até 5 km.</p>
+            <div class="acoes">
+              <a class="btn btn-cheio" href="#cardapio">Ver o cardápio</a>
+              <a class="btn btn-linha" href="#" data-atende-ai-abrir>
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>
+                Tirar uma dúvida
+              </a>
+            </div>
+            <div class="selos">
+              <div><b>R$ 0,90</b>o pão francês</div>
+              <div><b>6h–20h</b>de segunda a sábado</div>
+              <div><b>48 h</b>para encomendar bolo</div>
+            </div>
+          </div>
+
+          <div class="vitrine">
+            <div class="fundo"></div>
+            <svg class="arte" viewBox="0 0 400 400" aria-label="Pães e croissant" role="img">
+              <defs>
+                <linearGradient id="casca" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f7c46c"/><stop offset=".55" stop-color="#d98a2b"/><stop offset="1" stop-color="#9a4a10"/></linearGradient>
+                <linearGradient id="casca2" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fbd38d"/><stop offset="1" stop-color="#b8611a"/></linearGradient>
+                <filter id="sombra" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="14" stdDeviation="12" flood-color="#5b2a06" flood-opacity=".35"/></filter>
+              </defs>
+              <!-- cesta -->
+              <g filter="url(#sombra)">
+                <path d="M70 250h260l-22 92a20 20 0 0 1-19.5 15.5h-177A20 20 0 0 1 92 342z" fill="#7a4a24"/>
+                <path d="M70 250h260l-4 16H74z" fill="#5b3418"/>
+                <g stroke="#8f5a2e" stroke-width="3" opacity=".8"><path d="M96 280h208M100 304h200M104 328h192"/></g>
+              </g>
+              <!-- baguete -->
+              <g filter="url(#sombra)" transform="rotate(-24 200 200)">
+                <rect x="96" y="150" width="250" height="56" rx="28" fill="url(#casca)"/>
+                <g stroke="#fff1d0" stroke-width="5" stroke-linecap="round" opacity=".85"><path d="M140 166l20 22M186 164l20 24M232 164l20 24M278 166l20 22"/></g>
+              </g>
+              <!-- pão redondo -->
+              <g filter="url(#sombra)">
+                <ellipse cx="148" cy="238" rx="72" ry="54" fill="url(#casca)"/>
+                <path d="M112 222c22-14 50-14 72 0" stroke="#fff1d0" stroke-width="5" stroke-linecap="round" fill="none" opacity=".85"/>
+                <path d="M118 244c18-10 42-10 60 0" stroke="#fff1d0" stroke-width="4" stroke-linecap="round" fill="none" opacity=".6"/>
+              </g>
+              <!-- croissant -->
+              <g filter="url(#sombra)">
+                <path d="M222 252c4-34 34-56 66-52 30 4 52 30 50 58-12-14-28-20-40-18 6 10 6 22 0 32-10-10-22-14-34-12 2 10-2 20-10 26-14-8-28-14-32-34z" fill="url(#casca2)"/>
+                <g stroke="#9a4a10" stroke-width="3" fill="none" opacity=".45" stroke-linecap="round"><path d="M262 212c-4 14-4 28 2 40M292 206c2 14 0 28-8 40M318 222c-4 10-12 18-22 24"/></g>
+              </g>
+              <!-- pães de queijo -->
+              <g filter="url(#sombra)">
+                <circle cx="300" cy="300" r="22" fill="#f6cf7a"/><circle cx="294" cy="293" r="6" fill="#fff2c9" opacity=".8"/>
+                <circle cx="256" cy="312" r="19" fill="#f2c56a"/><circle cx="251" cy="306" r="5" fill="#fff2c9" opacity=".8"/>
+              </g>
+            </svg>
+            <div class="etiqueta um"><b>Saiu agora</b>fornada das 15h</div>
+            <div class="etiqueta dois"><span class="ponto"></span><span><b>Aberto agora</b>até as 20h</span></div>
+          </div>
         </div>
-        <div class="foto" role="img" aria-label="Pães dourados"></div>
       </section>
-      <section class="cards">
-        <div><b>Seg a sáb</b>6h às 20h</div>
-        <div><b>Dom e feriados</b>7h às 13h</div>
-        <div><b>Entrega</b>taxa de R$ 7,00</div>
+
+      <section class="bloco cardapio" id="cardapio">
+        <div class="miolo">
+          <div class="cab-bloco">
+            <div><span class="rotulo">Cardápio</span><h2>Do forno para a mesa</h2></div>
+            <p>Os preços de sempre do balcão. Não achou o que procura? Pergunte para a Lia, no canto da tela.</p>
+          </div>
+          <div class="itens">
+            <article class="item">
+              <span class="icone"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 20c0-6 5-11 11-11s11 5 11 11c0 2-1.5 3.5-3.5 3.5h-15C6.5 23.5 5 22 5 20z"/><path d="M12 14l2 4M16 12.5v5M20 14l-2 4"/></svg></span>
+              <h3>Pão francês</h3>
+              <p>Casca fininha e miolo macio, saindo a cada duas horas.</p>
+              <div class="preco"><span>a unidade</span><b>R$ 0,90</b></div>
+            </article>
+            <article class="item">
+              <span class="icone"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="11" cy="18" r="5.5"/><circle cx="21" cy="18" r="5.5"/><circle cx="16" cy="10" r="4.5"/></svg></span>
+              <h3>Pão de queijo</h3>
+              <p>Receita mineira, com polvilho e queijo de verdade. Também congelado para assar em casa.</p>
+              <div class="preco"><span>R$ 4,50 a unidade · 1 kg congelado</span><b>R$ 39,90</b></div>
+            </article>
+            <article class="item">
+              <span class="icone"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 13h17v6a7 7 0 0 1-7 7h-3a7 7 0 0 1-7-7z"/><path d="M23 15h1.5a3.5 3.5 0 0 1 0 7H22"/><path d="M11 4c-1 1.5 1 2.5 0 4M16 4c-1 1.5 1 2.5 0 4"/></svg></span>
+              <h3>Café coado</h3>
+              <p>Passado na hora, de grão torrado aqui perto. Ou um cappuccino cremoso.</p>
+              <div class="preco"><span>cappuccino R$ 9,00</span><b>R$ 5,00</b></div>
+            </article>
+            <article class="item">
+              <span class="icone"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 22l24-10v10z"/><path d="M4 22h24v4H4z"/><path d="M11 19.2v.1M17 16.7v.1M23 14.2v.1"/></svg></span>
+              <h3>Bolo de cenoura</h3>
+              <p>Com cobertura de chocolate que escorre. O preferido da casa.</p>
+              <div class="preco"><span>a fatia</span><b>R$ 8,00</b></div>
+            </article>
+            <article class="item">
+              <span class="icone"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l11-6 11 6"/><path d="M5 11h22v4H5z"/><path d="M6 15c2 2 4 2 6 0s4-2 6 0 4 2 6 0"/><path d="M5 20h22v5H5z"/></svg></span>
+              <h3>Sanduíche natural</h3>
+              <p>Frango desfiado, cenoura e folhas, no pão integral da casa.</p>
+              <div class="preco"><span>de frango</span><b>R$ 14,00</b></div>
+            </article>
+            <article class="item">
+              <span class="icone"><svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="9" width="17" height="12" rx="2"/><path d="M21 13h4l3 4v4h-7"/><circle cx="9" cy="23" r="2.5"/><circle cx="23" cy="23" r="2.5"/></svg></span>
+              <h3>Entrega</h3>
+              <p>Num raio de 5 km. Pedidos pelo WhatsApp (11) 90000-0000, mínimo de R$ 30,00.</p>
+              <div class="preco"><span>taxa</span><b>R$ 7,00</b></div>
+            </article>
+          </div>
+        </div>
+      </section>
+
+      <section class="bloco encomendas" id="encomendas">
+        <div class="miolo">
+          <div class="cartao-bolo">
+            <span class="rotulo">Encomendas</span>
+            <h2>O bolo da sua festa, feito aqui</h2>
+            <p>Massa fofinha, recheio generoso e acabamento do jeito que você imaginou. Conte para a Lia a data e o número de convidados, e a nossa equipe retorna com o orçamento.</p>
+            <div class="valor"><b>a partir de R$ 89,90</b>1 kg, serve cerca de 10 pessoas</div>
+            <a class="btn btn-cheio" href="#" data-atende-ai-abrir>Pedir orçamento</a>
+            <svg class="enfeite" viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true"><path d="M5 26h22M7 26V16h18v10M7 20c2 1.5 4 1.5 6 0s4-1.5 6 0 4 1.5 6 0M16 16v-4M16 9a1.5 2 0 0 1 0-3"/></svg>
+          </div>
+          <div class="sabores">
+            <div class="sabor"><i style="background:#5b3219"></i><div><h3>Chocolate</h3><p>Massa de cacau com brigadeiro cremoso.</p></div></div>
+            <div class="sabor"><i style="background:linear-gradient(135deg,#f8f4ec 50%,#5b3219 50%)"></i><div><h3>Prestígio</h3><p>Chocolate e coco fresco, o clássico.</p></div></div>
+            <div class="sabor"><i style="background:radial-gradient(circle at 35% 35%,#e11d48 18%,#fdf2e9 20%)"></i><div><h3>Ninho com morango</h3><p>Creme de leite Ninho e morangos frescos.</p></div></div>
+            <div class="sabor"><i style="background:#9f1d2d"></i><div><h3>Red velvet</h3><p>Massa aveludada com creme de cream cheese.</p></div></div>
+            <div class="regras">
+              <div class="regra"><b>48 horas</b>de antecedência, no mínimo</div>
+              <div class="regra"><b>Sinal de 50%</b>na confirmação do pedido</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="bloco visite" id="visite">
+        <div class="miolo">
+          <div class="mapa" role="img" aria-label="Mapa ilustrado com a padaria na Rua das Flores">
+            <svg viewBox="0 0 600 400" preserveAspectRatio="xMidYMid slice" aria-hidden="true">
+              <rect width="600" height="400" fill="#efe2cc"/>
+              <g fill="#e6d4b6"><rect x="30" y="30" width="150" height="110" rx="12"/><rect x="210" y="30" width="170" height="110" rx="12"/><rect x="410" y="30" width="160" height="110" rx="12"/><rect x="30" y="250" width="150" height="120" rx="12"/><rect x="410" y="250" width="160" height="120" rx="12"/></g>
+              <rect x="210" y="250" width="170" height="120" rx="12" fill="#cfe3c0"/>
+              <g fill="none" stroke="#fffaf0" stroke-width="26" stroke-linecap="round"><path d="M-10 195h620"/><path d="M195-10v420"/><path d="M395-10v420"/></g>
+              <g fill="none" stroke="#e8d7bb" stroke-width="2" stroke-dasharray="10 10"><path d="M-10 195h620"/></g>
+              <circle cx="312" cy="186" r="10" fill="#b45309" stroke="#fff" stroke-width="4"/>
+              <text x="40" y="186" font-family="Inter, sans-serif" font-size="13" fill="#8a6a48">Rua das Flores</text>
+              <text x="240" y="318" font-family="Inter, sans-serif" font-size="13" fill="#5f7d4c">Praça da Vila</text>
+            </svg>
+            <div class="alfinete"><b>Pão de Ouro</b> · Rua das Flores, 123</div>
+          </div>
+          <div class="infos">
+            <div class="info"><h3>Horário</h3><dl><dt>Segunda a sábado</dt><dd>6h às 20h</dd><dt>Domingo e feriados</dt><dd>7h às 13h</dd></dl></div>
+            <div class="info"><h3>Endereço</h3><p>Rua das Flores, 123, Vila Exemplo, São Paulo/SP</p></div>
+            <div class="info"><h3>Pagamento</h3><p>Pix, débito, crédito e vale-refeição (Alelo e Sodexo). Não aceitamos cheque.</p></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="chamada">
+        <div class="miolo">
+          <span class="rotulo">Atendimento 24 horas</span>
+          <h2>Ficou com alguma dúvida? A Lia responde na hora</h2>
+          <p>Horários, preços, encomendas e entrega. Se quiser fazer um pedido, ela passa o seu contato para a nossa equipe.</p>
+          <a class="btn btn-cheio" href="#" data-atende-ai-abrir>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M21 12a8 8 0 0 1-11.6 7.1L4 20l1-4.6A8 8 0 1 1 21 12z"/></svg>
+            Conversar com a Lia
+          </a>
+        </div>
       </section>
     </main>
+
+    <footer>
+      <div class="miolo">
+        <span class="logo"><svg viewBox="0 0 40 40" aria-hidden="true"><rect width="40" height="40" rx="12" fill="#b45309"/><path d="M10 24c0-6.6 4.5-12 10-12s10 5.4 10 12c0 2.4-1.8 4-4 4H14c-2.2 0-4-1.6-4-4z" fill="#fde68a"/></svg>Pão de Ouro</span>
+        <span>Empresa fictícia. Demonstração do <a href="https://github.com/calvarenga92/atende-ai" target="_blank" rel="noopener">Atende AI</a>, projeto de <a href="https://claudio-alvarenga.vercel.app" target="_blank" rel="noopener">Claudio Alvarenga</a>.</span>
+      </div>
+    </footer>
+
+    <script>
+      // Borda no topo ao rolar.
+      const topo = document.getElementById('topo');
+      addEventListener('scroll', () => topo.classList.toggle('rolou', scrollY > 8), { passive: true });
+      // "Aberto agora": segue o horário de Brasília.
+      (() => {
+        const agora = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/Sao_Paulo' }));
+        const h = agora.getHours() + agora.getMinutes() / 60;
+        const domingo = agora.getDay() === 0;
+        const [abre, fecha] = domingo ? [7, 13] : [6, 20];
+        const aberto = h >= abre && h < fecha;
+        const el = document.querySelector('.etiqueta.dois');
+        el.querySelector('b').textContent = aberto ? 'Aberto agora' : 'Fechado agora';
+        const amanha = agora.getDay() === 6 ? 7 : 6;
+        el.querySelector('b').nextSibling.textContent = aberto
+          ? `até as ${fecha}h`
+          : h < abre ? `abre às ${abre}h` : `abre amanhã às ${amanha}h`;
+        el.querySelector('.ponto').style.background = aberto ? '#16a34a' : '#dc2626';
+        el.querySelector('.ponto').style.boxShadow = aberto ? '0 0 0 4px rgb(22 163 74 / .18)' : '0 0 0 4px rgb(220 38 38 / .18)';
+      })();
+    </script>
 
     <!-- O widget do Atende AI: é tudo o que a empresa cola no site. -->
     <script src="https://calvarenga-atende-ai-api.vercel.app/widget.js" data-empresa="padaria-demo" async></script>
