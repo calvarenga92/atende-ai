@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Patch, UseGuards } from '@nestjs/common';
-import type { UsuarioLogado } from '../auth/auth.service.js';
+import { USUARIO_DEMO, type UsuarioLogado } from '../auth/auth.service.js';
+import { somenteLeitura } from '../comum/erro-aplicacao.js';
 import { GuardaAuth, UsuarioAtual } from '../auth/guarda-auth.js';
 import { validarDadosEmpresa } from '../empresas/dados-empresa.js';
 import { EmpresasService } from '../empresas/empresas.service.js';
@@ -25,6 +26,15 @@ export class PainelController {
   /** Persona, base de conhecimento, cor, sugestões. Trocar o slug muda a tag do widget. */
   @Patch('empresa')
   atualizar(@UsuarioAtual() usuario: UsuarioLogado, @Body() corpo: unknown) {
+    // No ar, a conta demo é pública: ninguém troca o bot da padaria dos outros.
+    if (
+      process.env.DEMO_SOMENTE_LEITURA === '1' &&
+      usuario.email.toLowerCase() === USUARIO_DEMO.email
+    ) {
+      throw somenteLeitura(
+        'Na conta demo as mudanças não são salvas. A prévia ao lado mostra como ficaria; para salvar, crie a sua conta.',
+      );
+    }
     return this.empresas.atualizar(
       usuario.empresaId,
       validarDadosEmpresa(corpo, true),

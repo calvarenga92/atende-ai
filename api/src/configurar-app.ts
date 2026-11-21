@@ -13,6 +13,13 @@ export function configurarApp(
   origensPainel: string[],
 ): void {
   app.setGlobalPrefix('api');
+  // Atrás do proxy da Vercel o IP do visitante vem no X-Forwarded-For (limites por IP).
+  if (process.env.VERCEL) {
+    (app as unknown as { set(k: string, v: unknown): void }).set(
+      'trust proxy',
+      true,
+    );
+  }
   app.useGlobalFilters(new FiltroErros());
   // O chat é chamado pelo widget nos sites dos clientes, de qualquer origem.
   // Login e painel só respondem às origens do painel (CORS_ORIGENS).

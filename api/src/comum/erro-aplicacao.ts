@@ -4,6 +4,7 @@ export type CodigoErro =
   | 'CONFLITO'
   | 'NAO_AUTENTICADO'
   | 'MUITAS_TENTATIVAS'
+  | 'SOMENTE_LEITURA'
   | 'FALHA_TRANSITORIA'
   | 'ERRO_DESCONHECIDO';
 
@@ -44,3 +45,6 @@ export const naoAutenticado = (
 
 export const muitasTentativas = (mensagem: string) =>
   new ErroAplicacao(429, 'MUITAS_TENTATIVAS', mensagem);
+
+export const somenteLeitura = (mensagem: string) =>
+  new ErroAplicacao(403, 'SOMENTE_LEITURA', mensagem);
