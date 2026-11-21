@@ -70,9 +70,10 @@ export class LeadsService {
           `Lead salvo na conversa ${conversaId} (${v.dados.tipoContato})`,
         );
         aoSalvar?.();
+        const primeiroNome = v.dados.nome.split(' ')[0];
         return {
-          texto:
-            'Contato salvo. Confirme para a pessoa que a equipe vai entrar em contato, sem repetir os dados dela.',
+          texto: 'Contato salvo. A confirmação já foi mostrada à pessoa.',
+          respostaPronta: `Pronto, ${primeiroNome}! Já passei seu contato para a equipe, que vai falar com você em breve para combinar os detalhes. Posso ajudar com mais alguma coisa?`,
         };
       },
     };

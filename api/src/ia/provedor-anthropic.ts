@@ -1,10 +1,11 @@
-import Anthropic from '@anthropic-ai/sdk';
+import { Anthropic } from '@anthropic-ai/sdk';
 import { Logger } from '@nestjs/common';
 import type { Esforco } from '../config/ambiente.js';
 import {
   chamadasDosBlocos,
   executarChamadas,
   MAX_RODADAS_FERRAMENTA,
+  mensagemPronta,
   type MensagemIa,
   type PedidoIa,
   type ProvedorIa,
@@ -117,6 +118,12 @@ export class ProvedorAnthropic implements ProvedorIa {
           role: 'user',
           content: resultado.conteudo as Anthropic.Beta.BetaContentBlockParam[],
         });
+        if (resultado.respostaPronta) {
+          saida.novaRodada();
+          saida.aoTexto(resultado.respostaPronta);
+          novas.push(mensagemPronta(resultado.respostaPronta));
+          return { mensagens: novas, consumo };
+        }
         if (rodada >= MAX_RODADAS_FERRAMENTA) {
           return { mensagens: novas, consumo };
         }

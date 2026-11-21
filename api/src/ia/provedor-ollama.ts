@@ -4,6 +4,7 @@ import {
   executarChamadas,
   type FerramentaIa,
   MAX_RODADAS_FERRAMENTA,
+  mensagemPronta,
   type MensagemIa,
   type PedidoIa,
   type ProvedorIa,
@@ -96,6 +97,12 @@ export class ProvedorOllama implements ProvedorIa {
       );
       novas.push(resultado);
       historico.push(...paraOllama([resultado], conteudo));
+      if (resultado.respostaPronta) {
+        saida.novaRodada();
+        saida.aoTexto(resultado.respostaPronta);
+        novas.push(mensagemPronta(resultado.respostaPronta));
+        break;
+      }
       if (rodada >= MAX_RODADAS_FERRAMENTA) break;
     }
 

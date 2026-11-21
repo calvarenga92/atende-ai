@@ -17,6 +17,12 @@ export interface MensagemIa {
 export interface ResultadoFerramenta {
   texto: string;
   erro?: boolean;
+  /**
+   * Resposta final para o visitante, já pronta. Quando vem, o provedor mostra
+   * este texto e encerra, sem outra rodada da IA: confirmação sai sempre certa
+   * (modelos menores às vezes degeneram logo depois de uma ferramenta).
+   */
+  respostaPronta?: string;
 }
 
 /** Ferramenta que a IA pode chamar. Quem executa valida a entrada: ela vem do modelo. */
@@ -118,8 +124,9 @@ export function resultadosDosBlocos(
 export async function executarChamadas(
   chamadas: ChamadaFerramenta[],
   ferramentas: FerramentaIa[],
-): Promise<MensagemIa> {
+): Promise<MensagemIa & { respostaPronta?: string }> {
   const conteudo: unknown[] = [];
+  const prontas: string[] = [];
   for (const c of chamadas) {
     const f = ferramentas.find((x) => x.nome === c.nome);
     const r: ResultadoFerramenta = f
@@ -131,8 +138,13 @@ export async function executarChamadas(
       content: r.texto,
       ...(r.erro ? { is_error: true } : {}),
     });
+    if (r.respostaPronta) prontas.push(r.respostaPronta);
   }
-  return { papel: 'user', conteudo };
+  return {
+    papel: 'user',
+    conteudo,
+    ...(prontas.length ? { respostaPronta: prontas.join('\n\n') } : {}),
+  };
 }
 
 /**
@@ -165,4 +177,9 @@ export function sistemaCompleto({ sistema, contexto }: PedidoIa): string {
 
 ${contexto}`
     : sistema;
+}
+
+/** Mensagem da assistente com a resposta pronta de uma ferramenta. */
+export function mensagemPronta(texto: string): MensagemIa {
+  return { papel: 'assistant', conteudo: [{ type: 'text', text: texto }] };
 }

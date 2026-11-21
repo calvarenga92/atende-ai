@@ -168,6 +168,52 @@ describe('ProvedorOpenAi no limite de uso', () => {
   });
 });
 
+describe('ProvedorOpenAi com resposta pronta', () => {
+  afterEach(() => vi.restoreAllMocks());
+
+  it('mostra a resposta pronta da ferramenta e não chama a IA de novo', async () => {
+    const fetch = vi.spyOn(globalThis, 'fetch').mockResolvedValue(
+      streamSse([
+        {
+          choices: [
+            {
+              delta: {
+                tool_calls: [
+                  {
+                    index: 0,
+                    id: 'c1',
+                    function: { name: 'salvar_lead', arguments: '{}' },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ]),
+    );
+    const salvar: FerramentaIa = {
+      ...ferramenta,
+      executar: async () => ({ texto: 'ok', respostaPronta: 'Pronto, Ana!' }),
+    };
+    const pedacos: string[] = [];
+    const r = await new ProvedorOpenAi('https://x.test/v1', 'k', 'm').responder(
+      {
+        sistema: 'S',
+        mensagens: [],
+        ferramentas: [salvar],
+        aoTexto: (t) => pedacos.push(t),
+        sinal: new AbortController().signal,
+      },
+    );
+    expect(fetch).toHaveBeenCalledTimes(1);
+    expect(pedacos.join('')).toBe('Pronto, Ana!');
+    expect(r.mensagens.at(-1)).toEqual({
+      papel: 'assistant',
+      conteudo: [{ type: 'text', text: 'Pronto, Ana!' }],
+    });
+  });
+});
+
 describe('paraOpenAi', () => {
   it('converte pedido e resultado de ferramenta', () => {
     expect(

@@ -4,6 +4,7 @@ import {
   executarChamadas,
   type FerramentaIa,
   MAX_RODADAS_FERRAMENTA,
+  mensagemPronta,
   type MensagemIa,
   type PedidoIa,
   type ProvedorIa,
@@ -106,6 +107,12 @@ export class ProvedorOpenAi implements ProvedorIa {
       );
       novas.push(resultado);
       historico.push(...paraOpenAi([resultado]));
+      if (resultado.respostaPronta) {
+        saida.novaRodada();
+        saida.aoTexto(resultado.respostaPronta);
+        novas.push(mensagemPronta(resultado.respostaPronta));
+        break;
+      }
       if (rodada >= MAX_RODADAS_FERRAMENTA) break;
     }
 
@@ -143,7 +150,8 @@ export class ProvedorOpenAi implements ProvedorIa {
             stream_options: { include_usage: true },
             // Atendimento pede resposta firme, não criativa.
             temperature: 0.3,
-            max_tokens: 1024,
+            // Resposta de chat é curta; o teto também corta qualquer saída degenerada.
+            max_tokens: 600,
             ...(ferramentas.length
               ? {
                   tools: ferramentas.map((f) => ({
