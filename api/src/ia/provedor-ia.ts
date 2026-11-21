@@ -34,6 +34,11 @@ export interface FerramentaIa {
 
 export interface PedidoIa {
   sistema: string;
+  /**
+   * Contexto que muda a cada pedido (data de hoje). Fica fora do `sistema`
+   * para não quebrar o cache do prompt; cada provedor anexa do seu jeito.
+   */
+  contexto?: string;
   mensagens: MensagemIa[];
   ferramentas?: FerramentaIa[];
   /** Chamado a cada pedaço de texto gerado, para o streaming. */
@@ -151,4 +156,13 @@ export function separadorDeRodadas(aoTexto: (pedaco: string) => void) {
       aoTexto(pedaco);
     },
   };
+}
+
+/** Prompt de sistema + contexto do pedido, para provedores sem blocos de sistema. */
+export function sistemaCompleto({ sistema, contexto }: PedidoIa): string {
+  return contexto
+    ? `${sistema}
+
+${contexto}`
+    : sistema;
 }

@@ -33,6 +33,7 @@ export class ProvedorAnthropic implements ProvedorIa {
 
   async responder({
     sistema,
+    contexto,
     mensagens,
     ferramentas = [],
     aoTexto,
@@ -72,6 +73,8 @@ export class ProvedorAnthropic implements ProvedorIa {
                 text: sistema,
                 cache_control: { type: 'ephemeral' },
               },
+              // Depois do ponto de cache: a data muda e não invalida o resto.
+              ...(contexto ? [{ type: 'text' as const, text: contexto }] : []),
             ],
             // Cache automático também do histórico da conversa.
             cache_control: { type: 'ephemeral' },

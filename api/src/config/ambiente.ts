@@ -2,7 +2,12 @@
  * Variáveis de ambiente lidas uma vez, na subida. Faltou algo obrigatório,
  * a aplicação nem sobe: melhor falhar no deploy do que na primeira requisição.
  */
-export const PROVEDORES_IA = ['simulado', 'ollama', 'anthropic'] as const;
+export const PROVEDORES_IA = [
+  'simulado',
+  'ollama',
+  'openai',
+  'anthropic',
+] as const;
 export type ProvedorIaNome = (typeof PROVEDORES_IA)[number];
 
 export const ESFORCOS = ['low', 'medium', 'high', 'xhigh', 'max'] as const;
@@ -15,6 +20,7 @@ export interface Ambiente {
   ia: {
     provedor: ProvedorIaNome;
     ollama: { url: string; modelo: string; contexto: number };
+    openai: { url: string; chave: string; modelo: string };
     anthropic: { modelo: string; esforco: Esforco };
   };
 }
@@ -35,6 +41,16 @@ export function lerAmbiente(env: NodeJS.ProcessEnv = process.env): Ambiente {
     .map((o) => o.trim())
     .filter(Boolean);
 
+  if (
+    env.IA_PROVEDOR?.trim() === 'openai' &&
+    !env.IA_CHAVE?.trim() &&
+    !/127\.0\.0\.1|localhost/.test(env.IA_URL ?? '')
+  ) {
+    throw new Error(
+      'IA_PROVEDOR=openai precisa de IA_CHAVE. Veja o .env.example.',
+    );
+  }
+
   return {
     porta,
     urlBanco,
@@ -53,6 +69,15 @@ export function lerAmbiente(env: NodeJS.ProcessEnv = process.env): Ambiente {
           env.OLLAMA_CONTEXTO,
           32768,
         ),
+      },
+      // Formato de chat da OpenAI: Groq (padrão, plano grátis), Gemini, OpenRouter, Ollama /v1.
+      openai: {
+        url: (env.IA_URL?.trim() || 'https://api.groq.com/openai/v1').replace(
+          /\/$/,
+          '',
+        ),
+        chave: env.IA_CHAVE?.trim() ?? '',
+        modelo: env.IA_MODELO?.trim() || 'llama-3.3-70b-versatile',
       },
       anthropic: {
         modelo: env.ANTHROPIC_MODELO?.trim() || 'claude-opus-5-5',

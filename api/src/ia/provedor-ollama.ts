@@ -10,6 +10,7 @@ import {
   type RespostaIa,
   resultadosDosBlocos,
   separadorDeRodadas,
+  sistemaCompleto,
   textoDosBlocos,
 } from './provedor-ia.js';
 
@@ -50,15 +51,10 @@ export class ProvedorOllama implements ProvedorIa {
     this.nome = `ollama (${modelo})`;
   }
 
-  async responder({
-    sistema,
-    mensagens,
-    ferramentas = [],
-    aoTexto,
-    sinal,
-  }: PedidoIa): Promise<RespostaIa> {
+  async responder(pedido: PedidoIa): Promise<RespostaIa> {
+    const { mensagens, ferramentas = [], aoTexto, sinal } = pedido;
     const historico: MensagemOllama[] = [
-      { role: 'system', content: sistema },
+      { role: 'system', content: sistemaCompleto(pedido) },
       ...paraOllama(mensagens),
     ];
     const novas: MensagemIa[] = [];

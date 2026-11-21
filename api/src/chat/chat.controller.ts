@@ -1,14 +1,23 @@
-import { Body, Controller, Get, Param, Post, Res } from '@nestjs/common';
+import { Body, Controller, Get, Ip, Param, Post, Res } from '@nestjs/common';
 import type { Response } from 'express';
-import { dadosInvalidos } from '../comum/erro-aplicacao.js';
+import { LimiteTentativas } from '../auth/limite-tentativas.js';
+import { dadosInvalidos, muitasTentativas } from '../comum/erro-aplicacao.js';
 import { ChatService, type EventoChat } from './chat.service.js';
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
 const MAX_CARACTERES = 2000;
+/** Freio por visitante: protege a cota da IA (plano grátis) de quem dispara mensagens. */
+const MAX_MENSAGENS_POR_IP = Number(process.env.CHAT_MAX_POR_IP ?? 30);
+const JANELA_IP_MS = 10 * 60_000;
 
 /** Rotas públicas, chamadas pelo widget no site da empresa. */
 @Controller('chat/:slug')
 export class ChatController {
+  private readonly limite = new LimiteTentativas(
+    MAX_MENSAGENS_POR_IP,
+    JANELA_IP_MS,
+  );
+
   constructor(private readonly chat: ChatService) {}
 
   @Get('config')
@@ -24,9 +33,17 @@ export class ChatController {
   async enviar(
     @Param('slug') slug: string,
     @Body() corpo: unknown,
+    @Ip() ip: string,
     @Res() res: Response,
   ) {
     const { mensagem, conversaId } = validar(corpo);
+    const espera = this.limite.bloqueado(ip);
+    if (espera) {
+      throw muitasTentativas(
+        `Muitas mensagens seguidas. Tente de novo em ${espera} min.`,
+      );
+    }
+    this.limite.falhou(ip); // aqui "falhou" só conta a mensagem
 
     const cancelar = new AbortController();
     res.on('close', () => cancelar.abort());

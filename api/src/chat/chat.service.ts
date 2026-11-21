@@ -10,7 +10,7 @@ import {
   type ProvedorIa,
 } from '../ia/provedor-ia.js';
 import { LeadsService } from '../leads/leads.service.js';
-import { montarPromptSistema } from './prompt-sistema.js';
+import { montarContextoDoDia, montarPromptSistema } from './prompt-sistema.js';
 
 /** O que o chat manda para o navegador, em ordem. */
 export type EventoChat =
@@ -82,6 +82,7 @@ export class ChatService {
     try {
       const resposta = await this.ia.responder({
         sistema: montarPromptSistema(empresa),
+        contexto: montarContextoDoDia(),
         mensagens: [...historico, pergunta].map((m) => ({
           papel: m.papel,
           conteudo: m.conteudo,

@@ -60,7 +60,7 @@ export class LeadsService {
         if (!v.ok) {
           return {
             erro: true,
-            texto: `Não salvei: ${v.problemas.join('; ')}. Peça o dado que falta à pessoa.`,
+            texto: `[Aviso interno, não repita para a pessoa] Contato não salvo: ${v.problemas.join('; ')}. Com suas palavras, peça à pessoa só o que falta e chame salvar_lead de novo quando ela responder.`,
           };
         }
         await this.repo.upsert({ empresaId, conversaId, ...v.dados }, [
