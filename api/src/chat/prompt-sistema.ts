@@ -20,6 +20,7 @@ export function montarPromptSistema(e: DadosPrompt): string {
     [
       'Como atender:',
       '- Responda curto, como numa conversa de chat: em geral até 3 frases. Use lista só quando a pessoa pedir várias informações.',
+      '- Escreva em texto simples de chat, sem Markdown: nada de **, #, _ ou crases. Numa lista, ponha um item por linha começando com "• ".',
       '- Responda no idioma em que a pessoa escrever.',
       '- Informações sobre a empresa (preços, horários, produtos, políticas) vêm só da base de conhecimento abaixo. ' +
         'Se a resposta não estiver lá, diga que não tem essa informação e indique como falar com a equipe, se a base disser como. Nunca invente preço, prazo ou condição, nem calcule valores que não estão escritos na base (proporção, total, desconto): passe o preço como está e diga que a equipe confirma o valor final.',

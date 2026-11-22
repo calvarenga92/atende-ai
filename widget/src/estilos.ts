@@ -64,6 +64,7 @@ button:focus-visible { outline: 3px solid var(--base); outline-offset: 2px; }
 }
 .msg { max-width: 82%; padding: 10px 14px; white-space: pre-wrap; overflow-wrap: anywhere; }
 .msg.bot { align-self: flex-start; background: #fff; border: 1px solid var(--borda); border-radius: 4px 18px 18px 18px; }
+.msg strong { font-weight: 700; }
 .msg.eu { align-self: flex-end; background: var(--base); color: var(--sobre-base); border-radius: 18px 4px 18px 18px; }
 .cursor::after {
   content: ""; display: inline-block; width: 7px; height: 15px; margin-left: 3px; vertical-align: -2px;

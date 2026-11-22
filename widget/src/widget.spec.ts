@@ -170,6 +170,61 @@ describe('widget', () => {
     expect($('.corpo img')).toBeNull();
   });
 
+  describe('negrito na resposta do bot', () => {
+    it('**texto** vira <strong>, sem sobrar asterisco', async () => {
+      const { api } = apiFalsa(respondeTexto('Pedido com no mínimo **48 horas** de antecedência.'));
+      const { $, $$ } = montar(api);
+      await escrever($, 'Bolo?');
+      const resposta = $$('.msg.bot').at(-1)!;
+      expect(resposta.querySelector('strong')!.textContent).toBe('48 horas');
+      expect(resposta.textContent).toBe('Pedido com no mínimo 48 horas de antecedência.');
+    });
+
+    it('funciona mesmo com o ** chegando em pedaços no streaming', async () => {
+      const { api } = apiFalsa(respondeTexto('Mínimo **48', ' horas', '** antes.'));
+      const { $, $$ } = montar(api);
+      await escrever($, 'Bolo?');
+      const fortes = $$('.msg.bot').at(-1)!.querySelectorAll('strong');
+      expect([...fortes].map((s) => s.textContent)).toEqual(['48 horas']);
+    });
+
+    it('** sem par fica como está', async () => {
+      const { api } = apiFalsa(respondeTexto('Custa **R$ 10 o quilo.'));
+      const { $, $$ } = montar(api);
+      await escrever($, 'Preço?');
+      const resposta = $$('.msg.bot').at(-1)!;
+      expect(resposta.querySelector('strong')).toBeNull();
+      expect(resposta.textContent).toBe('Custa **R$ 10 o quilo.');
+    });
+
+    it('HTML dentro do negrito continua texto', async () => {
+      const { api } = apiFalsa(respondeTexto('**<img src=x onerror=alert(1)>**'));
+      const { $ } = montar(api);
+      await escrever($, 'oi');
+      expect($('.corpo img')).toBeNull();
+      expect($('.corpo strong')!.textContent).toBe('<img src=x onerror=alert(1)>');
+    });
+
+    it('mantém o negrito ao reabrir a conversa em outra página', async () => {
+      const { api } = apiFalsa(respondeTexto('Abrimos **às 6h**.'));
+      const primeiro = montar(api);
+      primeiro.$('.bolha').click();
+      await escrever(primeiro.$, 'Horário?');
+      widget!.destruir();
+
+      const segundo = montar(apiFalsa().api);
+      expect(segundo.$('.corpo strong')!.textContent).toBe('às 6h');
+    });
+
+    it('a mensagem do visitante sai como ele escreveu', async () => {
+      const { api } = apiFalsa(respondeTexto('Ok.'));
+      const { $ } = montar(api);
+      await escrever($, 'quero **muito** um bolo');
+      expect($('.msg.eu').textContent).toBe('quero **muito** um bolo');
+      expect($('.msg.eu strong')).toBeNull();
+    });
+  });
+
   it('Esc fecha e devolve o foco para a bolha', () => {
     const { $ } = montar(apiFalsa().api);
     $('.bolha').click();

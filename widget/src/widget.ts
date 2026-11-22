@@ -1,6 +1,7 @@
 import type { Api, ConfigBot } from './api.js';
 import { montarPaleta } from './cores.js';
 import { ESTILOS } from './estilos.js';
+import { formatarMensagem } from './formatar.js';
 import type { ItemConversa, Memoria } from './memoria.js';
 import type { EventoChat } from './sse.js';
 
@@ -154,7 +155,11 @@ export function montarWidget({ config, api, memoria, alvo = document.body }: Opc
       aviso.append(item.texto);
       return aviso;
     }
-    return el('div', `msg ${item.autor}`, item.texto);
+    // Só a resposta do bot é formatada; o que o visitante digitou sai como escreveu.
+    if (item.autor === 'eu') return el('div', 'msg eu', item.texto);
+    const msg = el('div', 'msg bot');
+    msg.append(formatarMensagem(item.texto));
+    return msg;
   }
 
   function desenhar() {
@@ -250,7 +255,7 @@ export function montarWidget({ config, api, memoria, alvo = document.body }: Opc
           corpo.append(balao);
         }
         atual += e.texto;
-        balao.textContent = atual;
+        balao.replaceChildren(formatarMensagem(atual));
         rolar();
       } else if (e.tipo === 'lead') {
         fecharBalao();

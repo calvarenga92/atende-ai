@@ -28,6 +28,10 @@ describe('montarPromptSistema', () => {
     ).toContain('Orientações da empresa:\nOfereça bolo.');
   });
 
+  it('pede texto simples, sem Markdown (o widget não mostra asteriscos)', () => {
+    expect(montarPromptSistema(empresa)).toContain('sem Markdown');
+  });
+
   it('é determinístico, para o cache da API funcionar', () => {
     expect(montarPromptSistema(empresa)).toBe(
       montarPromptSistema({ ...empresa }),
